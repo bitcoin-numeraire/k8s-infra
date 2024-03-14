@@ -163,7 +163,7 @@ prometheus:
               regex: 'prometheus-kube-state-metrics-.*'
               action: drop
             - source_labels: [__meta_kubernetes_pod_name]
-              regex: 'lnd.*'
+              regex: 'cln.*'
               action: drop
             - source_labels: [__meta_kubernetes_pod_name]
               regex: 'dealer.*'
