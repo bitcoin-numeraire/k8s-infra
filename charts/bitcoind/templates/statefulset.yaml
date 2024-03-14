@@ -169,7 +169,7 @@ spec:
               subPath: bitcoin.conf
         {{- end }}
         - name: exporter
-          image: jvstein/bitcoin-prometheus-exporter:v0.6.0
+          image: jvstein/bitcoin-prometheus-exporter:v0.7.0
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
           - name: BITCOIN_RPC_HOST
