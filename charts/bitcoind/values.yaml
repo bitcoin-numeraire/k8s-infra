@@ -8,6 +8,7 @@ secrets:
   create: true
 
 replicaCount: 1
+terminationGracePeriodSeconds: 60
 
 image:
   repository: lncm/bitcoind
@@ -99,10 +100,10 @@ affinity: {}
 
 labels: {}
 
-podLabels: {}
+podLabels:
+  app: bitcoind
 
 bitcoindGenericConfig:
-- debug=mempool
 - debug=rpc
 - shrinkdebugfile=1
 - server=1
@@ -112,7 +113,6 @@ bitcoindGenericConfig:
 - zmqpubrawtx=tcp://0.0.0.0:28333
 - zmqpubrawblock=tcp://0.0.0.0:28332
 - blockfilterindex=1
-- dbcache=8192
 
 # these flags need to be here and not in bitcoindGenericConfig because they have to be present under a separate section inside bitcoind.conf when in testnet/regtest mode
 bitcoindCustomConfig:
@@ -126,3 +126,6 @@ descriptor:
 
 startupProbe:
   failureThreshold: 90
+
+livenessProbe:
+  failureThreshold: 3

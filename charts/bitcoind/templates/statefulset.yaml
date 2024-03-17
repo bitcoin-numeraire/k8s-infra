@@ -19,6 +19,7 @@ spec:
   selector:
     matchLabels:
       {{- include "bitcoind.selectorLabels" . | nindent 6 }}
+  terminationGracePeriodSeconds: {{.Values.terminationGracePeriodSeconds}}
   template:
     metadata:
       annotations:
@@ -103,6 +104,7 @@ spec:
               - getblockchaininfo
             failureThreshold: {{.Values.startupProbe.failureThreshold}}
             periodSeconds: 10
+            timeoutSeconds: 3
           livenessProbe:
             exec:
               command:
@@ -114,6 +116,8 @@ spec:
               - getblockchaininfo
             initialDelaySeconds: 120
             periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: {{.Values.livenessProbe.failureThreshold}}
           readinessProbe:
             exec:
               command:
@@ -123,8 +127,10 @@ spec:
               - -{{.Values.global.network}}
               {{- end }}
               - getblockchaininfo
-            periodSeconds: 4
-            successThreshold: 3
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+            failureThreshold: 3
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         {{- if and .Values.descriptor.secretName .Values.descriptor.secretKey }}
@@ -193,10 +199,18 @@ spec:
             httpGet:
               path: /
               port: metrics
+            initialDelaySeconds: 120
+            periodSeconds: 300
+            timeoutSeconds: 5
+            failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /
               port: metrics
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+            periodSeconds: 300
       volumes:
         - name: config
           emptyDir: {}

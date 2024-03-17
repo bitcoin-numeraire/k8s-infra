@@ -16,13 +16,13 @@ prometheus:
     - name: "bitcoin-exporter"
       selector:
         matchLabels:
-          app: "bitcoind"
+          app.kubernetes.io/name: bitcoind
       namespaceSelector:
         matchNames:
           - bitcoin-mainnet
       endpoints:
         - port: "metrics"
-          interval: 300s
+          interval: 180s
           path: "/"
 
   ## Prometheus StorageSpec for persistent data
@@ -84,3 +84,7 @@ kubeScheduler:
 ##
 kubeEtcd:
   enabled: false
+
+  ## Stack name: prometheus-community/kube-prometheus-stack
+## Ref: https://github.com/prometheus-community/helm-charts/tree/kube-prometheus-stack-35.5.1/charts/kube-prometheus-stack
+##
