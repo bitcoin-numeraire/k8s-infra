@@ -38,7 +38,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           helm upgrade --install bitcoind charts/bitcoind/ -f charts/bitcoind/values.yaml --namespace bitcoin-mainnet --create-namespace
-          # Add more Helm upgrade/install commands as needed for other charts
+          helm upgrade kube-prometheus-stack prometheus-community/kube-prometheus-stack --namespace namespace kube-prometheus-stack --values charts/monitoring/values.yaml
       - name: Deploy Testnet
         if: github.ref == 'refs/heads/development'
         run: |

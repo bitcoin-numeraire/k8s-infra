@@ -130,7 +130,7 @@ spec:
             periodSeconds: 30
             successThreshold: 1
             timeoutSeconds: 3
-            failureThreshold: 3
+            failureThreshold: {{.Values.livenessProbe.failureThreshold}}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         {{- if and .Values.descriptor.secretName .Values.descriptor.secretKey }}
