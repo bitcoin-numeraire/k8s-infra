@@ -8,6 +8,7 @@ secrets:
   create: true
 
 replicaCount: 1
+terminationGracePeriodSeconds: 60
 
 image:
   repository: lncm/bitcoind
@@ -65,18 +66,18 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
-resources: {}
+resources:
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   # We recommend using the following values due to the resource intensive nature of bitcoind
-  # limits:
-  #   cpu: 3000m
-  #   memory: 5120Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 4096Mi
+  limits:
+    cpu: 3000m
+    memory: 5200Mi
+  requests:
+    cpu: 1000m
+    memory: 4096Mi
 
 persistence:
   enabled: true
@@ -99,7 +100,8 @@ affinity: {}
 
 labels: {}
 
-podLabels: {}
+podLabels:
+  app: bitcoind
 
 bitcoindGenericConfig:
 - debug=mempool
@@ -112,7 +114,6 @@ bitcoindGenericConfig:
 - zmqpubrawtx=tcp://0.0.0.0:28333
 - zmqpubrawblock=tcp://0.0.0.0:28332
 - blockfilterindex=1
-- dbcache=8192
 
 # these flags need to be here and not in bitcoindGenericConfig because they have to be present under a separate section inside bitcoind.conf when in testnet/regtest mode
 bitcoindCustomConfig:
@@ -126,3 +127,6 @@ descriptor:
 
 startupProbe:
   failureThreshold: 90
+
+livenessProbe:
+  failureThreshold: 3

@@ -5,8 +5,5 @@ dependencies:
 - name: prometheus
   repository: https://prometheus-community.github.io/helm-charts
   version: 25.17.0
-- name: kubernetes-dashboard
-  repository: https://kubernetes.github.io/dashboard/
-  version: 7.1.2
-digest: sha256:a7bc54cdc759b95792c1f453fb97630f573b39590a8fc29ebfc909908a9ea861
-generated: "2024-03-15T01:52:03.270815+01:00"
+digest: sha256:08bd3956345350e4dab8c3b3b426fe44b14bac03f5f6e29a70e70b76c3d6167d
+generated: "2024-03-15T15:29:29.409577+01:00"
