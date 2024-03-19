@@ -1,5 +1,5 @@
 global:
-  network: mainnet
+  network: bitcoin
 
 replicaCount: 1
 terminationGracePeriodSeconds: 60
@@ -11,7 +11,7 @@ image:
   repository: elementsproject/lightningd
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v24.02.1"
+  tag: "v24.02-amd64"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -31,14 +31,7 @@ podAnnotations: {}
 podSecurityContext:
   fsGroup: 2000
 
-securityContext:
-  # capabilities:
-  #   drop:
-  #   - ALL
-  readOnlyRootFilesystem: true
-  runAsNonRoot: true
-  runAsUser: 1000
-  runAsGroup: 3000
+securityContext: {}
 
 service:
   type: ClusterIP
@@ -47,7 +40,8 @@ service:
 ingress:
   enabled: false
   className: ""
-  annotations: {}
+  annotations:
+    {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
@@ -60,7 +54,8 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
-resources: {}
+resources:
+  {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -101,22 +96,21 @@ bitcoinNode:
   port: 8332
 
 lightningdGenericConfig:
-- developer
-- bitcoin-rpcuser=rpcuser
-- bitcoin-rpcconnect=bitcoind
-- bitcoin-rpcport=8332
-- bitcoin-retry-timeout=3600
-- log-level=debug
-- alias=NumeraireSwissKnife
-- rgb=55C692
-- fee-base=800
-- fee-per-satoshi=8
-- min-capacity-sat=1000000
-- ignore-fee-limits=true
-- max-concurrent-htlcs=30
-- funding-confirms=3
-- dev-allowdustreserve=true
-- lsp-listen=127.0.0.1:12312
+  - developer
+  - bitcoin-rpcuser=rpcuser
+  - bitcoin-rpcconnect=bitcoind.bitcoin-mainnet.svc.cluster.local
+  - bitcoin-rpcport=8332
+  - bitcoin-retry-timeout=3600
+  - log-level=debug:connectd
+  - alias=NumeraireSwissKnife
+  - rgb=55C692
+  - fee-base=800
+  - fee-per-satoshi=8
+  - min-capacity-sat=1000000
+  - ignore-fee-limits=true
+  - max-concurrent-htlcs=30
+  - funding-confirms=3
+  - dev-allowdustreserve=true
 
 startupProbe:
   failureThreshold: 5

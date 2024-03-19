@@ -55,7 +55,8 @@ service:
 
 ingress:
   enabled: false
-  annotations: {}
+  annotations:
+    {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
@@ -104,16 +105,15 @@ podLabels:
   app: bitcoind
 
 bitcoindGenericConfig:
-- debug=mempool
-- debug=rpc
-- shrinkdebugfile=1
-- server=1
-- txindex=1
-- printtoconsole=1
-- rpcuser=rpcuser
-- zmqpubrawtx=tcp://0.0.0.0:28333
-- zmqpubrawblock=tcp://0.0.0.0:28332
-- blockfilterindex=1
+  - debug=rpc
+  - shrinkdebugfile=1
+  - server=1
+  - txindex=1
+  - printtoconsole=1
+  - rpcuser=rpcuser
+  - zmqpubrawtx=tcp://0.0.0.0:28333
+  - zmqpubrawblock=tcp://0.0.0.0:28332
+  - blockfilterindex=1
 
 # these flags need to be here and not in bitcoindGenericConfig because they have to be present under a separate section inside bitcoind.conf when in testnet/regtest mode
 bitcoindCustomConfig:

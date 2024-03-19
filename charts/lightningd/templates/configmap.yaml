@@ -5,9 +5,8 @@ metadata:
   labels:
     {{- include "lightningd.labels" . | nindent 4 }}
 data:
-  bitcoin.conf: |-
+  lightning.conf: |-
   {{- range .Values.lightningdGenericConfig }}
     {{ . }}
   {{- end }}
-  network={{ .Values.global.network }}
 

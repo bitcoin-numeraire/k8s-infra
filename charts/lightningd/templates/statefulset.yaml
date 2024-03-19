@@ -52,21 +52,18 @@ spec:
           - 'sh'
           - '-c'
           - |
-            cat <<EOF > ~/.lightning/lightning.conf
-            bitcoin-rpcpassword=$(cat /rpcpassword/password)
-            wallet=$(cat /connectionstring/connectionstring)
-            bookkeeper=$(cat /connectionstring/connectionstring)
+            cat <<EOF > /root/.lightning/config
+            bitcoin-rpcpassword=$(cat /secrets/bitcoinrpcpassword)
+            wallet=$(cat /secrets/connectionstring)
             $(cat /configmap/lightning.conf)
             EOF
           volumeMounts:
             - name: configmap
               mountPath: /configmap
-            - name: connectionstring
-              mountPath: /connectionstring
-            - name: rpcpassword
-              mountPath: /rpcpassword
+            - name: secrets
+              mountPath: /secrets
             - name: config
-              mountPath: /data/.lightning/
+              mountPath: /root/.lightning/
       containers:
       {{- if .Values.sidecarContainers }}
       {{- toYaml .Values.sidecarContainers | nindent 8 }}
@@ -79,23 +76,21 @@ spec:
           env:
           - name: MALLOC_ARENA_MAX
             value: "1"
+          - name: LIGHTNINGD_NETWORK
+            value: {{.Values.global.network}}
           ports:
-            - name: rpc
-              containerPort: {{ .Values.global.service.ports.rpc }}
+            - name: p2p
+              containerPort: {{ .Values.service.port }}
           volumeMounts:
             - name: data
-              mountPath: /data/.lightning
+              mountPath: /root/.lightning
             - name: config
-              mountPath: /data/.lightning/lightning.conf
-              subPath: lightning.conf
+              mountPath: /root/.lightning/config
+              subPath: config
           startupProbe:
             exec:
               command:
               - lightning-cli
-              - --conf=/data/.lightning/lightning.conf
-              {{- if ne .Values.global.network "mainnet" }}
-              - -{{.Values.global.network}}
-              {{- end }}
               - getinfo
             failureThreshold: {{.Values.startupProbe.failureThreshold}}
             periodSeconds: 10
@@ -104,10 +99,6 @@ spec:
             exec:
               command:
               - lightning-cli
-              - --conf=/data/.lightning/lightning.conf
-              {{- if ne .Values.global.network "mainnet" }}
-              - -{{.Values.global.network}}
-              {{- end }}
               - getinfo
             initialDelaySeconds: 120
             periodSeconds: 30
@@ -117,10 +108,6 @@ spec:
             exec:
               command:
               - lightning-cli
-              - --conf=/data/.lightning/lightning.conf
-              {{- if ne .Values.global.network "mainnet" }}
-              - -{{.Values.global.network}}
-              {{- end }}
               - getinfo
             periodSeconds: 30
             successThreshold: 1
@@ -131,12 +118,9 @@ spec:
       volumes:
         - name: config
           emptyDir: {}
-        - name: rpcpassword
+        - name: secrets
           secret:
-            secretName: {{ printf "%s-rpcpassword" (include "bitcoind.fullname" .) }}
-        - name: connectionstring
-          secret:
-            secretName: {{ printf "%s-connectionstring" (include "lightningd.fullname" .) }}
+            secretName: {{ printf "%s-conf" (include "lightningd.fullname" .) }}
         - name: configmap
           configMap:
             name: {{ template "lightningd.fullname" . }}

@@ -68,8 +68,6 @@ Create the name of the service account to use
 {{/*
    Reusing current password since secret exists
 */}}
-{{-  $secret.data.password | b64dec -}}
-{{- else -}}
-{{-  .Values.postgres.connectionstring -}}
+{{-  $secret.data.connectionstring | b64dec -}}
 {{- end -}}
 {{- end -}}
