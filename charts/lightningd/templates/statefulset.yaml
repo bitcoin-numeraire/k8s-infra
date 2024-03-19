@@ -1,0 +1,161 @@
+{{ $checksum := include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "lightningd.fullname" . }}
+  labels:
+    kube-monkey/identifier: {{ include "lightningd.fullname" . }}
+    kube-monkey/enabled: enabled
+    kube-monkey/kill-mode: fixed
+    kube-monkey/kill-value: "1"
+    kube-monkey/mtbf: "3"
+    {{- include "lightningd.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  serviceName: {{ include "lightningd.fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "lightningd.selectorLabels" . | nindent 6 }}
+  terminationGracePeriodSeconds: {{.Values.terminationGracePeriodSeconds}}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ $checksum }}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        kube-monkey/identifier: {{ include "lightningd.fullname" . }}
+        kube-monkey/enabled: enabled
+        {{- include "lightningd.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "lightningd.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+      {{- if .Values.extraInitContainers }}
+      {{- toYaml .Values.extraInitContainers | nindent 8 }}
+      {{- end }}
+        - name: copy-lightningd-config
+          image: busybox
+          command:
+          - 'sh'
+          - '-c'
+          - |
+            cat <<EOF > ~/.lightning/lightning.conf
+            bitcoin-rpcpassword=$(cat /rpcpassword/password)
+            wallet=$(cat /connectionstring/connectionstring)
+            bookkeeper=$(cat /connectionstring/connectionstring)
+            $(cat /configmap/lightning.conf)
+            EOF
+          volumeMounts:
+            - name: configmap
+              mountPath: /configmap
+            - name: connectionstring
+              mountPath: /connectionstring
+            - name: rpcpassword
+              mountPath: /rpcpassword
+            - name: config
+              mountPath: /data/.lightning/
+      containers:
+      {{- if .Values.sidecarContainers }}
+      {{- toYaml .Values.sidecarContainers | nindent 8 }}
+      {{- end }}
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: MALLOC_ARENA_MAX
+            value: "1"
+          ports:
+            - name: rpc
+              containerPort: {{ .Values.global.service.ports.rpc }}
+          volumeMounts:
+            - name: data
+              mountPath: /data/.lightning
+            - name: config
+              mountPath: /data/.lightning/lightning.conf
+              subPath: lightning.conf
+          startupProbe:
+            exec:
+              command:
+              - lightning-cli
+              - --conf=/data/.lightning/lightning.conf
+              {{- if ne .Values.global.network "mainnet" }}
+              - -{{.Values.global.network}}
+              {{- end }}
+              - getinfo
+            failureThreshold: {{.Values.startupProbe.failureThreshold}}
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command:
+              - lightning-cli
+              - --conf=/data/.lightning/lightning.conf
+              {{- if ne .Values.global.network "mainnet" }}
+              - -{{.Values.global.network}}
+              {{- end }}
+              - getinfo
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: {{.Values.livenessProbe.failureThreshold}}
+          readinessProbe:
+            exec:
+              command:
+              - lightning-cli
+              - --conf=/data/.lightning/lightning.conf
+              {{- if ne .Values.global.network "mainnet" }}
+              - -{{.Values.global.network}}
+              {{- end }}
+              - getinfo
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+            failureThreshold: {{.Values.livenessProbe.failureThreshold}}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: config
+          emptyDir: {}
+        - name: rpcpassword
+          secret:
+            secretName: {{ printf "%s-rpcpassword" (include "bitcoind.fullname" .) }}
+        - name: connectionstring
+          secret:
+            secretName: {{ printf "%s-connectionstring" (include "lightningd.fullname" .) }}
+        - name: configmap
+          configMap:
+            name: {{ template "lightningd.fullname" . }}
+        - name: data
+        {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (include "lightningd.fullname" .) }}
+        {{- else }}
+          emptyDir: {}
+        {{- end -}}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
