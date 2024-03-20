@@ -48,13 +48,14 @@ spec:
       {{- end }}
         - name: copy-lightningd-config
           image: busybox
-          command:
-          - 'sh'
-          - '-c'
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh", "-c"]
+          args:
           - |
             cat <<EOF > /root/.lightning/config
             bitcoin-rpcpassword=$(cat /secrets/bitcoinrpcpassword)
-            wallet=$(cat /secrets/connectionstring)
+            wallet=$(cat /secrets/wallet-db)
+            bookkeeper-db=$(cat /secrets/bookkeeper-db)
             $(cat /configmap/lightning.conf)
             EOF
           volumeMounts:
@@ -64,6 +65,36 @@ spec:
               mountPath: /secrets
             - name: config
               mountPath: /root/.lightning/
+        # - name: download-lspd-plugin
+        #   image: alpine:latest
+        #   imagePullPolicy: {{ .Values.image.pullPolicy }}
+        #   command: ["/bin/sh", "-c"]
+        #   args:
+        #   - |
+        #     apk add --no-cache curl tar &&
+        #     curl -L "https://github.com/breez/lspd/releases/download/v24.03.16/lspd-v24.03.16-linux-amd64.tar.gz" -o /tmp/lspd.tar.gz &&
+        #     tar -xzf /tmp/lspd.tar.gz -C /tmp &&
+        #     mkdir -p /plugins &&
+        #     mv /tmp/lspd_cln_plugin /plugins/
+        #   volumeMounts:
+        #   - name: plugins
+        #     mountPath: /plugins
+        - name: build-lspd-plugin
+          image: debian:bullseye-slim
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh", "-c"]
+          args:
+          - |
+            apt-get update && apt-get install -y git make golang &&
+            git clone https://github.com/breez/lspd.git /tmp/lspd &&
+            cd /tmp/lspd &&
+            git checkout v24.03.16 &&
+            make release-plugin &&
+            mkdir -p /plugins/ &&
+            cp lspd_cln_plugin /plugins/lspd_cln_plugin
+          volumeMounts:
+          - name: plugins
+            mountPath: /plugins
       containers:
       {{- if .Values.sidecarContainers }}
       {{- toYaml .Values.sidecarContainers | nindent 8 }}
@@ -87,6 +118,8 @@ spec:
             - name: config
               mountPath: /root/.lightning/config
               subPath: config
+            - name: plugins
+              mountPath: /root/.lightning/plugins
           startupProbe:
             exec:
               command:
@@ -124,6 +157,8 @@ spec:
         - name: configmap
           configMap:
             name: {{ template "lightningd.fullname" . }}
+        - name: plugins
+          emptyDir: {}
         - name: data
         {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:

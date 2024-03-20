@@ -84,7 +84,18 @@ nodeSelector: {}
 
 tolerations: []
 
-affinity: {}
+affinity:
+  podAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - bitcoind
+          topologyKey: kubernetes.io/hostname
 
 labels: {}
 
@@ -101,7 +112,7 @@ lightningdGenericConfig:
   - bitcoin-rpcconnect=bitcoind.bitcoin-mainnet.svc.cluster.local
   - bitcoin-rpcport=8332
   - bitcoin-retry-timeout=3600
-  - log-level=debug:connectd
+  - log-level=debug
   - alias=NumeraireSwissKnife
   - rgb=55C692
   - fee-base=800
@@ -111,6 +122,8 @@ lightningdGenericConfig:
   - max-concurrent-htlcs=30
   - funding-confirms=3
   - dev-allowdustreserve=true
+  - plugin=/root/.lightning/plugins/lspd_cln_plugin
+  - lsp-listen=127.0.0.1:12312
 
 startupProbe:
   failureThreshold: 5
