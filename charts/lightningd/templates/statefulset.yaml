@@ -1,0 +1,165 @@
+{{ $checksum := include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "lightningd.fullname" . }}
+  labels:
+    kube-monkey/identifier: {{ include "lightningd.fullname" . }}
+    kube-monkey/enabled: enabled
+    kube-monkey/kill-mode: fixed
+    kube-monkey/kill-value: "1"
+    kube-monkey/mtbf: "3"
+    {{- include "lightningd.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  serviceName: {{ include "lightningd.fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "lightningd.selectorLabels" . | nindent 6 }}
+  terminationGracePeriodSeconds: {{.Values.terminationGracePeriodSeconds}}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ $checksum }}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        kube-monkey/identifier: {{ include "lightningd.fullname" . }}
+        kube-monkey/enabled: enabled
+        {{- include "lightningd.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "lightningd.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+      {{- if .Values.extraInitContainers }}
+      {{- toYaml .Values.extraInitContainers | nindent 8 }}
+      {{- end }}
+        - name: copy-lightningd-config
+          image: busybox
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh", "-c"]
+          args:
+          - |
+            cat <<EOF > /root/.lightning/config
+            bitcoin-rpcpassword=$(cat /secrets/bitcoinrpcpassword)
+            wallet=$(cat /secrets/wallet-db)
+            bookkeeper-db=$(cat /secrets/bookkeeper-db)
+            $(cat /configmap/lightning.conf)
+            EOF
+          volumeMounts:
+            - name: configmap
+              mountPath: /configmap
+            - name: secrets
+              mountPath: /secrets
+            - name: config
+              mountPath: /root/.lightning/
+        - name: download-lspd-plugin
+          image: alpine:latest
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh", "-c"]
+          args:
+          - |
+            set -e # Exit if any command fails
+            apk add --no-cache curl tar &&
+            curl -L "https://github.com/darioAnongba/lspd/releases/download/v24.03.17/lspd--linux-amd64.tar.gz" -o /tmp/lspd.tar.gz &&
+            tar -xzf /tmp/lspd.tar.gz -C /tmp &&
+            mkdir -p /plugins &&
+            mv /tmp/lspd_cln_plugin /plugins/
+          volumeMounts:
+          - name: plugins
+            mountPath: /plugins
+      containers:
+      {{- if .Values.sidecarContainers }}
+      {{- toYaml .Values.sidecarContainers | nindent 8 }}
+      {{- end }}
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: MALLOC_ARENA_MAX
+            value: "1"
+          - name: LIGHTNINGD_NETWORK
+            value: {{.Values.global.network}}
+          ports:
+            - name: p2p
+              containerPort: {{ .Values.service.port }}
+          volumeMounts:
+            - name: data
+              mountPath: /root/.lightning
+            - name: config
+              mountPath: /root/.lightning/config
+              subPath: config
+            - name: plugins
+              mountPath: /root/.lightning/plugins
+          startupProbe:
+            exec:
+              command:
+              - lightning-cli
+              - getinfo
+            failureThreshold: {{.Values.startupProbe.failureThreshold}}
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command:
+              - lightning-cli
+              - getinfo
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: {{.Values.livenessProbe.failureThreshold}}
+          readinessProbe:
+            exec:
+              command:
+              - lightning-cli
+              - getinfo
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+            failureThreshold: {{.Values.livenessProbe.failureThreshold}}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: config
+          emptyDir: {}
+        - name: secrets
+          secret:
+            secretName: {{ printf "%s-conf" (include "lightningd.fullname" .) }}
+        - name: configmap
+          configMap:
+            name: {{ template "lightningd.fullname" . }}
+        - name: plugins
+          emptyDir: {}
+        - name: data
+        {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (include "lightningd.fullname" .) }}
+        {{- else }}
+          emptyDir: {}
+        {{- end -}}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
