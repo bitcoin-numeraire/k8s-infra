@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: start-script
+data:
+  start.sh: |
+    #!/bin/sh
+
+    # Read nodes.json content and export it as an environment variable
+    export NODES=$(cat /etc/nodes/nodes.json)
+
+    # Start lightningd in the background with the --daemon flag
+    lightningd --daemon --log-file /root/.lightning/bitcoin/lightningd.log
+
+    # Start lspd
+    chmod +x /root/.lightning/lspd/lspd
+    /root/.lightning/lspd/lspd
