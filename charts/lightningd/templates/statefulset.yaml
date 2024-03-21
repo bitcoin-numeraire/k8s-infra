@@ -73,13 +73,46 @@ spec:
           - |
             set -e # Exit if any command fails
             apk add --no-cache curl tar &&
-            curl -L "https://github.com/darioAnongba/lspd/releases/download/v24.03.17/lspd--linux-amd64.tar.gz" -o /tmp/lspd.tar.gz &&
+            curl -L "https://numeraire.fra1.cdn.digitaloceanspaces.com/lspd/lspd.tar.gz" -o /tmp/lspd.tar.gz &&
             tar -xzf /tmp/lspd.tar.gz -C /tmp &&
             mkdir -p /plugins &&
-            mv /tmp/lspd_cln_plugin /plugins/
+            mv /tmp/lspd_cln_plugin /plugins/ &&
+            mkdir -p /lspd &&
+            mv /tmp/lspd /lspd/ 
           volumeMounts:
           - name: plugins
             mountPath: /plugins
+          - name: lspd
+            mountPath: /lspd
+        - name: setup-nodes-env
+          image: alpine:latest
+          command: ["/bin/sh", "-c"]
+          args:
+          - |
+            set -e # Exit if any command fails
+            apk add --no-cache curl &&
+            echo 'Creating NODES env variable' &&
+            EXTERNAL_IP=$(curl -s http://whatismyip.akamai.com/) &&
+            NODES_JSON="[ { \"name\": \"${LSP_NAME}\", \"nodePubkey\": \"${PUB_KEY}\", \"lspdPrivateKey\": \"${LSPD_PRIVATE_KEY}\", \"token\": \"${TOKEN}\", \"host\": \"${EXTERNAL_IP}:8888\", \"publicChannelAmount\": \"1000183\", \"channelAmount\": \"100000\", \"channelPrivate\": false, \"targetConf\": \"6\", \"minConfs\": \"6\", \"minHtlcMsat\": \"600\", \"baseFeeMsat\": \"1000\", \"feeRate\": \"0.000001\", \"timeLockDelta\": \"144\", \"channelFeePermyriad\": \"40\", \"channelMinimumFeeMsat\": \"2000000\", \"additionalChannelCapacity\": \"100000\", \"maxInactiveDuration\": \"3888000\",  \"cln\": { \"pluginAddress\": \"127.0.0.1:12312\", \"socketPath\": \"/root/.lightning/bitcoin/lightning-rpc\" } } ]" &&
+            echo $NODES_JSON > /etc/nodes/nodes.json
+          env:
+            - name: LSP_NAME
+              value: {{.Values.lspdGenericConfig.lspName}}
+            - name: PUB_KEY
+              value: {{.Values.lspdGenericConfig.pubKey}}
+            - name: LSPD_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lspd-conf
+                  key: private-key 
+            - name: TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: lspd-conf
+                  key: token
+          volumeMounts:
+          - name: nodes
+            mountPath: /etc/nodes
       containers:
       {{- if .Values.sidecarContainers }}
       {{- toYaml .Values.sidecarContainers | nindent 8 }}
@@ -89,11 +122,44 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh", "/scripts/start.sh"]
           env:
-          - name: MALLOC_ARENA_MAX
-            value: "1"
-          - name: LIGHTNINGD_NETWORK
-            value: {{.Values.global.network}}
+            - name: MALLOC_ARENA_MAX
+              value: "1"
+            - name: LIGHTNINGD_NETWORK
+              value: {{.Values.global.network}}
+            - name: LISTEN_ADDRESS
+              value: {{.Values.lspdGenericConfig.listenAddress}}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: lspd-conf
+                  key: database-url 
+            - name: AWS_REGION
+              value: {{.Values.lspdGenericConfig.awsRegion}}
+            - name: AWS_ACCESS_KEY_ID
+              value: {{.Values.lspdGenericConfig.awsAccessKeyId}}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lspd-conf
+                  key: aws-secret-access-key 
+            - name: OPENCHANNEL_NOTIFICATION_TO
+              value: {{.Values.lspdGenericConfig.openChannelNotificationTo}}
+            - name: OPENCHANNEL_NOTIFICATION_CC
+              value: {{.Values.lspdGenericConfig.openChannelNotificationCC}}
+            - name: OPENCHANNEL_NOTIFICATION_FROM
+              value: {{.Values.lspdGenericConfig.openChannelNotificationFrom}}
+            - name: CHANNELMISMATCH_NOTIFICATION_TO
+              value: {{.Values.lspdGenericConfig.channelmismatchNotificationTo}}
+            - name: CHANNELMISMATCH_NOTIFICATION_CC
+              value: {{.Values.lspdGenericConfig.channelmismatchNotificationCC}}
+            - name: CHANNELMISMATCH_NOTIFICATION_FROM
+              value: {{.Values.lspdGenericConfig.channelmismatchNotificationFrom}}
+            - name: MEMPOOL_API_BASE_URL
+              value: {{.Values.lspdGenericConfig.mempoolApiBaseUrl}}
+            - name: MEMPOOL_PRIORITY
+              value: {{.Values.lspdGenericConfig.mempoolPriority}}
           ports:
             - name: p2p
               containerPort: {{ .Values.service.port }}
@@ -105,6 +171,12 @@ spec:
               subPath: config
             - name: plugins
               mountPath: /root/.lightning/plugins
+            - name: nodes
+              mountPath: /etc/nodes
+            - name: lspd
+              mountPath: /root/.lightning/lspd
+            - name: start-script-volume
+              mountPath: /scripts
           startupProbe:
             exec:
               command:
@@ -144,6 +216,13 @@ spec:
             name: {{ template "lightningd.fullname" . }}
         - name: plugins
           emptyDir: {}
+        - name: lspd
+          emptyDir: {}
+        - name: nodes
+          emptyDir: {}
+        - name: start-script-volume
+          configMap:
+            name: start-script
         - name: data
         {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:
