@@ -65,33 +65,18 @@ spec:
               mountPath: /secrets
             - name: config
               mountPath: /root/.lightning/
-        # - name: download-lspd-plugin
-        #   image: alpine:latest
-        #   imagePullPolicy: {{ .Values.image.pullPolicy }}
-        #   command: ["/bin/sh", "-c"]
-        #   args:
-        #   - |
-        #     apk add --no-cache curl tar &&
-        #     curl -L "https://github.com/breez/lspd/releases/download/v24.03.16/lspd-v24.03.16-linux-amd64.tar.gz" -o /tmp/lspd.tar.gz &&
-        #     tar -xzf /tmp/lspd.tar.gz -C /tmp &&
-        #     mkdir -p /plugins &&
-        #     mv /tmp/lspd_cln_plugin /plugins/
-        #   volumeMounts:
-        #   - name: plugins
-        #     mountPath: /plugins
-        - name: build-lspd-plugin
-          image: debian:bullseye-slim
+        - name: download-lspd-plugin
+          image: alpine:latest
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["/bin/sh", "-c"]
           args:
           - |
-            apt-get update && apt-get install -y git make golang &&
-            git clone https://github.com/breez/lspd.git /tmp/lspd &&
-            cd /tmp/lspd &&
-            git checkout v24.03.16 &&
-            make release-plugin &&
-            mkdir -p /plugins/ &&
-            cp lspd_cln_plugin /plugins/lspd_cln_plugin
+            set -e # Exit if any command fails
+            apk add --no-cache curl tar &&
+            curl -L "https://github.com/darioAnongba/lspd/releases/download/v24.03.17/lspd--linux-amd64.tar.gz" -o /tmp/lspd.tar.gz &&
+            tar -xzf /tmp/lspd.tar.gz -C /tmp &&
+            mkdir -p /plugins &&
+            mv /tmp/lspd_cln_plugin /plugins/
           volumeMounts:
           - name: plugins
             mountPath: /plugins
