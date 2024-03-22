@@ -1,4 +1,4 @@
-cert-manager:
+certManager:
   enabled: true
   installCRDs: true
   resources: {}
