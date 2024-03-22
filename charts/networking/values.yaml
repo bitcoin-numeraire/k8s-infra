@@ -3,6 +3,8 @@ cert-manager:
   installCRDs: false
   resources: {}
 
+installClusterIssuer: true
+
 ingress-nginx:
   enabled: true
   controller:
