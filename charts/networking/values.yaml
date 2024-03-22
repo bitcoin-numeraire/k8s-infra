@@ -1,0 +1,22 @@
+cert-manager:
+  enabled: true
+  installCRDs: true
+  resources: {}
+
+ingress-nginx:
+  enabled: true
+  controller:
+    resources: {}
+    replicaCount: 2
+    ingressClassResource:
+      default: true
+      watchIngressWithoutClass: true
+    config: {}
+    service:
+      type: LoadBalancer
+    metrics:
+      enabled: true
+      service:
+        annotations:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "10254"

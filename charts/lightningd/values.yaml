@@ -33,7 +33,14 @@ podSecurityContext:
 
 securityContext: {}
 
+ingress:
+  enabled: false
+  annotations: {}
+  tls: []
+
 lspdService:
+  host: lspd.swissknife.numeraire.tech
+  secretName: lspd-tls
   staticIP: ""
   type: ClusterIP
   annotations: {}

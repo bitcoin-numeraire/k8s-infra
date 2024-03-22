@@ -8,7 +8,7 @@ This repository contains Helm charts for deploying Numeraire Bitcoin services an
   - `bitcoind/`: Helm chart for deploying a Bitcoin node.
   - `monitoring/`: Helm chart for deploying monitoring tools.
   - `lightningd/`: Helm chart for deploying Core Lightning node + LSPD from Breez.
-  - `ingress/`: Helm chart for managing Ingress.
+  - `networking/`: Helm chart for managing Ingress and cert-manager + any other dependencies that we may add in the future.
 
 ## Prerequisites
 
