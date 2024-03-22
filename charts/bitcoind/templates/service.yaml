@@ -11,10 +11,6 @@ spec:
       port: {{ .Values.global.service.ports.rpc }}
     - name: p2p
       port: {{ .Values.service.ports.p2p }}
-    - name: zmqpubrawtx
-      port: {{ .Values.service.ports.zmqpubrawtx }}
-    - name: zmqpubrawblock
-      port: {{ .Values.service.ports.zmqpubrawblock }}
     - name: metrics
       port: {{ .Values.service.ports.metrics }}
   selector:

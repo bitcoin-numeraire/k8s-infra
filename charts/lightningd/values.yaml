@@ -33,9 +33,18 @@ podSecurityContext:
 
 securityContext: {}
 
-service:
+lspdService:
+  staticIP: ""
   type: ClusterIP
+  annotations: {}
+  port: 8888
+  targetPort: 8888
+
+p2pService:
+  staticIP: ""
+  type: LoadBalancer
   port: 9735
+  targetPort: 9735
 
 ingress:
   enabled: false
@@ -108,7 +117,6 @@ lightningdGenericConfig:
   - bitcoin-rpcconnect=bitcoind.bitcoin-mainnet.svc.cluster.local
   - bitcoin-rpcport=8332
   - bitcoin-retry-timeout=3600
-  - log-level=debug
   - alias=NumeraireSwissKnife
   - rgb=55C692
   - fee-base=800

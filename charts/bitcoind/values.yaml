@@ -48,8 +48,6 @@ securityContext:
 service:
   type: ClusterIP
   ports:
-    zmqpubrawtx: 28333
-    zmqpubrawblock: 28332
     p2p: 8333
     metrics: 3000
 
