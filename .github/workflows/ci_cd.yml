@@ -34,6 +34,14 @@ jobs:
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}
+      - name: Set up Helm
+        uses: azure/setup-helm@v4.1.0
+        with:
+          version: "latest"
+      - name: Add prometheus-community Helm repository
+        run: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+      - name: Update Helm repositories
+        run: helm repo update
       - name: Deploy Mainnet
         if: github.ref == 'refs/heads/main'
         run: |
