@@ -1,0 +1,246 @@
+{{ $checksum := include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "lightningd.fullname" . }}
+  labels:
+    kube-monkey/identifier: {{ include "lightningd.fullname" . }}
+    kube-monkey/enabled: enabled
+    kube-monkey/kill-mode: fixed
+    kube-monkey/kill-value: "1"
+    kube-monkey/mtbf: "3"
+    {{- include "lightningd.labels" . | nindent 4 }}
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  serviceName: {{ include "lightningd.fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "lightningd.selectorLabels" . | nindent 6 }}
+  terminationGracePeriodSeconds: {{.Values.terminationGracePeriodSeconds}}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ $checksum }}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        kube-monkey/identifier: {{ include "lightningd.fullname" . }}
+        kube-monkey/enabled: enabled
+        {{- include "lightningd.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "lightningd.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+      {{- if .Values.extraInitContainers }}
+      {{- toYaml .Values.extraInitContainers | nindent 8 }}
+      {{- end }}
+        - name: copy-lightningd-config
+          image: busybox
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh", "-c"]
+          args:
+          - |
+            cat <<EOF > /root/.lightning/config
+            bitcoin-rpcpassword=$(cat /secrets/bitcoinrpcpassword)
+            wallet=$(cat /secrets/wallet-db)
+            bookkeeper-db=$(cat /secrets/bookkeeper-db)
+            $(cat /configmap/lightning.conf)
+            EOF
+          volumeMounts:
+            - name: configmap
+              mountPath: /configmap
+            - name: secrets
+              mountPath: /secrets
+            - name: config
+              mountPath: /root/.lightning/
+        - name: download-lspd-plugin
+          image: alpine:latest
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh", "-c"]
+          args:
+          - |
+            set -e # Exit if any command fails
+            apk add --no-cache curl tar &&
+            curl -L "https://numeraire.fra1.cdn.digitaloceanspaces.com/lspd/lspd.tar.gz" -o /tmp/lspd.tar.gz &&
+            tar -xzf /tmp/lspd.tar.gz -C /tmp &&
+            mkdir -p /plugins &&
+            mv /tmp/lspd_cln_plugin /plugins/ &&
+            mkdir -p /lspd &&
+            mv /tmp/lspd /lspd/ 
+          volumeMounts:
+          - name: plugins
+            mountPath: /plugins
+          - name: lspd
+            mountPath: /lspd
+        - name: setup-nodes-env
+          image: alpine:latest
+          command: ["/bin/sh", "-c"]
+          args:
+          - |
+            set -e # Exit if any command fails
+            apk add --no-cache curl &&
+            echo 'Creating NODES env variable' &&
+            EXTERNAL_IP=$(curl -s http://whatismyip.akamai.com/) &&
+            NODES_JSON="[ { \"name\": \"${LSP_NAME}\", \"nodePubkey\": \"${PUB_KEY}\", \"lspdPrivateKey\": \"${LSPD_PRIVATE_KEY}\", \"token\": \"${TOKEN}\", \"host\": \"${EXTERNAL_IP}:8888\", \"publicChannelAmount\": \"1000183\", \"channelAmount\": \"100000\", \"channelPrivate\": false, \"targetConf\": \"6\", \"minConfs\": \"6\", \"minHtlcMsat\": \"600\", \"baseFeeMsat\": \"1000\", \"feeRate\": \"0.000001\", \"timeLockDelta\": \"144\", \"channelFeePermyriad\": \"40\", \"channelMinimumFeeMsat\": \"2000000\", \"additionalChannelCapacity\": \"100000\", \"maxInactiveDuration\": \"3888000\",  \"cln\": { \"pluginAddress\": \"127.0.0.1:12312\", \"socketPath\": \"/root/.lightning/bitcoin/lightning-rpc\" } } ]" &&
+            echo $NODES_JSON > /etc/nodes/nodes.json
+          env:
+            - name: LSP_NAME
+              value: {{.Values.lspdGenericConfig.lspName}}
+            - name: PUB_KEY
+              value: {{.Values.lspdGenericConfig.pubKey}}
+            - name: LSPD_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lspd-conf
+                  key: private-key 
+            - name: TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: lspd-conf
+                  key: token
+          volumeMounts:
+          - name: nodes
+            mountPath: /etc/nodes
+      containers:
+      {{- if .Values.sidecarContainers }}
+      {{- toYaml .Values.sidecarContainers | nindent 8 }}
+      {{- end }}
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/sh", "/scripts/start.sh"]
+          env:
+            - name: MALLOC_ARENA_MAX
+              value: "1"
+            - name: LIGHTNINGD_NETWORK
+              value: {{.Values.global.network}}
+            - name: LISTEN_ADDRESS
+              value: {{.Values.lspdGenericConfig.listenAddress}}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: lspd-conf
+                  key: database-url 
+            - name: AWS_REGION
+              value: {{.Values.lspdGenericConfig.awsRegion}}
+            - name: AWS_ACCESS_KEY_ID
+              value: {{.Values.lspdGenericConfig.awsAccessKeyId}}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lspd-conf
+                  key: aws-secret-access-key 
+            - name: OPENCHANNEL_NOTIFICATION_TO
+              value: {{.Values.lspdGenericConfig.openChannelNotificationTo}}
+            - name: OPENCHANNEL_NOTIFICATION_CC
+              value: {{.Values.lspdGenericConfig.openChannelNotificationCC}}
+            - name: OPENCHANNEL_NOTIFICATION_FROM
+              value: {{.Values.lspdGenericConfig.openChannelNotificationFrom}}
+            - name: CHANNELMISMATCH_NOTIFICATION_TO
+              value: {{.Values.lspdGenericConfig.channelmismatchNotificationTo}}
+            - name: CHANNELMISMATCH_NOTIFICATION_CC
+              value: {{.Values.lspdGenericConfig.channelmismatchNotificationCC}}
+            - name: CHANNELMISMATCH_NOTIFICATION_FROM
+              value: {{.Values.lspdGenericConfig.channelmismatchNotificationFrom}}
+            - name: MEMPOOL_API_BASE_URL
+              value: {{.Values.lspdGenericConfig.mempoolApiBaseUrl}}
+            - name: MEMPOOL_PRIORITY
+              value: {{.Values.lspdGenericConfig.mempoolPriority}}
+          ports:
+            - name: p2p
+              containerPort: {{ .Values.p2pService.port }}
+            - name: lspd
+              containerPort: {{ .Values.lspdService.port }}
+          volumeMounts:
+            - name: data
+              mountPath: /root/.lightning
+            - name: config
+              mountPath: /root/.lightning/config
+              subPath: config
+            - name: plugins
+              mountPath: /root/.lightning/plugins
+            - name: nodes
+              mountPath: /etc/nodes
+            - name: lspd
+              mountPath: /root/.lightning/lspd
+            - name: start-script-volume
+              mountPath: /scripts
+          startupProbe:
+            exec:
+              command:
+              - lightning-cli
+              - getinfo
+            failureThreshold: {{.Values.startupProbe.failureThreshold}}
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command:
+              - lightning-cli
+              - getinfo
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: {{.Values.livenessProbe.failureThreshold}}
+          readinessProbe:
+            exec:
+              command:
+              - lightning-cli
+              - getinfo
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+            failureThreshold: {{.Values.livenessProbe.failureThreshold}}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: config
+          emptyDir: {}
+        - name: secrets
+          secret:
+            secretName: {{ printf "%s-conf" (include "lightningd.fullname" .) }}
+        - name: configmap
+          configMap:
+            name: {{ template "lightningd.fullname" . }}
+        - name: plugins
+          emptyDir: {}
+        - name: lspd
+          emptyDir: {}
+        - name: nodes
+          emptyDir: {}
+        - name: start-script-volume
+          configMap:
+            name: start-script
+        - name: data
+        {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (include "lightningd.fullname" .) }}
+        {{- else }}
+          emptyDir: {}
+        {{- end -}}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

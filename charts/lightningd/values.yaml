@@ -1,0 +1,151 @@
+global:
+  network: bitcoin
+
+replicaCount: 1
+terminationGracePeriodSeconds: 60
+
+secrets:
+  create: true
+
+image:
+  repository: elementsproject/lightningd
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "v24.02-amd64"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 2000
+
+securityContext: {}
+
+lspdService:
+  staticIP: ""
+  type: ClusterIP
+  annotations: {}
+  port: 8888
+  targetPort: 8888
+
+p2pService:
+  staticIP: ""
+  type: LoadBalancer
+  port: 9735
+  targetPort: 9735
+
+ingress:
+  enabled: false
+  className: ""
+  annotations:
+    {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+persistence:
+  enabled: true
+  ## database data Persistent Volume Storage Class
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  # storageClass: "-"
+  accessMode: ReadWriteOnce
+  size: 5Gi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - bitcoind
+          topologyKey: kubernetes.io/hostname
+
+labels: {}
+
+podLabels:
+  app: lightningd
+
+lightningdGenericConfig:
+  - developer
+  - bitcoin-rpcuser=rpcuser
+  - bitcoin-rpcconnect=bitcoind.bitcoin-mainnet.svc.cluster.local
+  - bitcoin-rpcport=8332
+  - bitcoin-retry-timeout=3600
+  - alias=NumeraireSwissKnife
+  - rgb=55C692
+  - fee-base=800
+  - fee-per-satoshi=8
+  - min-capacity-sat=1000000
+  - ignore-fee-limits=true
+  - max-concurrent-htlcs=30
+  - funding-confirms=3
+  - dev-allowdustreserve=true
+  - plugin=/root/.lightning/plugins/lspd_cln_plugin
+  - lsp-listen=127.0.0.1:12312
+
+lspdGenericConfig:
+  listenAddress: 0.0.0.0:8888
+  awsRegion: eu-central-1
+  awsAccessKey: AKIATCKAS3WR3C5GH3QK
+  openChannelNotificationTo: "NumeraireSwissKnife <lightning@numeraire.tech>"
+  openChannelNotificationCC: "Dario Varela <dario.varela@numeraire.tech>"
+  openChannelNotificationFrom: "noreply@numeraire.tech"
+  channelmismatchNotificationTo: "NumeraireSwissKnife <lightning@numeraire.tech>"
+  channelmismatchNotificationCC: "Dario Varela <dario.varea@numeraire.tech>"
+  channelmismatchNotificationFrom: "noreply@numeraire.tech"
+  mempoolApiBaseUrl: https://mempool.space/api/v1/
+  mempoolPriority: economy
+  lspName: NumeraireSwissKnife
+  pubKey: 02fc22cb2dd9c71b39ad246ae206259376e0127cce2192d4061abd0172b53f391b
+
+startupProbe:
+  failureThreshold: 5
+
+livenessProbe:
+  failureThreshold: 3

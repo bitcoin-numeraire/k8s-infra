@@ -3,7 +3,7 @@ name: CI/CD Pipeline
 on:
   pull_request:
     branches:
-      - '*'
+      - "*"
   push:
     branches:
       - main
@@ -18,7 +18,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v4.1.0
         with:
-          version: 'latest'
+          version: "latest"
       - name: Lint Helm Charts
         run: |
           helm lint charts/*
@@ -33,12 +33,13 @@ jobs:
         uses: azure/k8s-set-context@v4
         with:
           method: kubeconfig
-          kubeconfig: ${{ secrets.KUBECONFIG }} 
+          kubeconfig: ${{ secrets.KUBECONFIG }}
       - name: Deploy Mainnet
         if: github.ref == 'refs/heads/main'
         run: |
+          helm upgrade kube-prometheus-stack prometheus-community/kube-prometheus-stack --version 55.7.0 --namespace kube-prometheus-stack --values charts/monitoring/values.yml
           helm upgrade --install bitcoind charts/bitcoind/ -f charts/bitcoind/values.yaml --namespace bitcoin-mainnet --create-namespace
-          helm upgrade kube-prometheus-stack prometheus-community/kube-prometheus-stack --namespace namespace kube-prometheus-stack --values charts/monitoring/values.yaml
+          helm upgrade --install lightningd charts/lightningd/ -f charts/lightningd/values.yaml --namespace lightning-mainnet --create-namespace
       - name: Deploy Testnet
         if: github.ref == 'refs/heads/development'
         run: |
