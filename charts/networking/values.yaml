@@ -2,6 +2,7 @@ certManager:
   enabled: true
   installCRDs: true
   resources: {}
+  installClusterIssuer: false
 
 ingress-nginx:
   enabled: true
