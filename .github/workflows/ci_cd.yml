@@ -46,8 +46,8 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           helm upgrade kube-prometheus-stack prometheus-community/kube-prometheus-stack --version 55.7.0 --namespace kube-prometheus-stack --values charts/monitoring/values.yaml
-          helm upgrade --install cert-manager charts/networking --namespace cert-manager --set certManager.enabled=true,ingress-nginx.enabled=false
-          helm upgrade --install ingress-nginx charts/networking --namespace ingress-nginx --set certManager.enabled=false,ingress-nginx.enabled=true
+          helm upgrade --install cert-manager charts/networking/ -f charts/networking/values.yaml --namespace cert-manager --set ingress-nginx.enabled=false
+          helm upgrade --install ingress-nginx charts/networking/ -f charts/networking/values.yaml --namespace ingress-nginx --set cert-manager.enabled=false,installClusterIssuer=false
           helm upgrade --install bitcoind charts/bitcoind/ -f charts/bitcoind/values.yaml --namespace bitcoin-mainnet --create-namespace
           helm upgrade --install lightningd charts/lightningd/ -f charts/lightningd/values.yaml --namespace lightning-mainnet --create-namespace
       - name: Deploy Testnet

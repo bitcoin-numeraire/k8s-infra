@@ -1,8 +1,7 @@
-certManager:
+cert-manager:
   enabled: true
-  installCRDs: true
+  installCRDs: false
   resources: {}
-  installClusterIssuer: false
 
 ingress-nginx:
   enabled: true

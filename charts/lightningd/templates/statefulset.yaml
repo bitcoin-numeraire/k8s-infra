@@ -14,7 +14,6 @@ spec:
   selector:
     matchLabels:
       {{- include "lightningd.selectorLabels" . | nindent 6 }}
-  terminationGracePeriodSeconds: {{.Values.terminationGracePeriodSeconds}}
   template:
     metadata:
       annotations:

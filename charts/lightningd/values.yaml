@@ -2,7 +2,6 @@ global:
   network: bitcoin
 
 replicaCount: 1
-terminationGracePeriodSeconds: 60
 
 secrets:
   create: true
