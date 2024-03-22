@@ -34,9 +34,7 @@ podSecurityContext:
 securityContext: {}
 
 ingress:
-  enabled: false
-  annotations: {}
-  tls: []
+  enabled: true
 
 lspdService:
   host: lspd.swissknife.numeraire.tech
