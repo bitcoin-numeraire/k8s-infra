@@ -19,7 +19,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: {{ include "lightningd.fullname" . }}
+            name: {{ include "lightningd.fullname" . }}-lspd
             port:
               number: {{.Values.lspdService.port}}
 {{- end }}
