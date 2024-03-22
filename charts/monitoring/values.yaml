@@ -2,7 +2,6 @@
 ## Ref: https://github.com/prometheus-community/helm-charts/tree/kube-prometheus-stack-35.5.1/charts/kube-prometheus-stack
 ##
 
-
 ## Manages Prometheus and Alertmanager components
 ##
 prometheusOperator:
@@ -13,6 +12,15 @@ prometheusOperator:
 prometheus:
   enabled: true
   additionalServiceMonitors:
+    - name: "ingress-nginx-monitor"
+      selector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+      namespaceSelector:
+        matchNames:
+          - ingress-nginx
+      endpoints:
+        - port: "metrics"
     - name: "bitcoin-exporter"
       selector:
         matchLabels:
@@ -59,7 +67,6 @@ grafana:
 ##
 alertmanager:
   enabled: true
-
 
 ## Create default rules for monitoring the cluster
 ##
