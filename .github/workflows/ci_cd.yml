@@ -50,6 +50,7 @@ jobs:
           helm upgrade --install ingress-nginx charts/networking/ -f charts/networking/values.yaml --namespace ingress-nginx --set cert-manager.enabled=false,installClusterIssuer=false
           helm upgrade --install bitcoind charts/bitcoind/ -f charts/bitcoind/values.yaml --namespace bitcoin-mainnet --create-namespace
           helm upgrade --install lightningd charts/lightningd/ -f charts/lightningd/values.yaml --namespace lightning-mainnet --create-namespace
+          helm upgrade --install pgadmin4 charts/database/ -f charts/database/values.yaml --namespace pgadmin --create-namespace
       - name: Deploy Testnet
         if: github.ref == 'refs/heads/development'
         run: |
