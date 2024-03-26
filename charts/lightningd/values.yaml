@@ -115,6 +115,12 @@ lightningdGenericConfig:
   - dev-allowdustreserve=true
   - plugin=/root/.lightning/plugins/lspd_cln_plugin
   - lsp-listen=127.0.0.1:12312
+  - allow-deprecated-apis=true
+  - experimental-anchors
+  - lsp-channel-accept-script: |
+      (lambda oc: encode({"result":"continue"}) if oc["id"]=="031015a7839468a3c266d662d5bb21ea4cea24226936e2864a7ca4f2c3939836e0" or oc["id"]=="02442d4249f9a93464aaf8cd8d522faa869356707b5f1537a8d6def2af50058c5b" else encode({"result":"reject", "error_message": "The channel cannot be opened"}))(decode(openchannel))
+  - disable-dns
+  - database-upgrade=true
 
 lspdGenericConfig:
   listenAddress: 0.0.0.0:8888
