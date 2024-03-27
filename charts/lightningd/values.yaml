@@ -117,8 +117,6 @@ lightningdGenericConfig:
   - lsp-listen=127.0.0.1:12312
   - allow-deprecated-apis=true
   - experimental-anchors
-  - lsp-channel-accept-script: |
-      (lambda oc: encode({"result":"continue"}) if oc["id"]=="031015a7839468a3c266d662d5bb21ea4cea24226936e2864a7ca4f2c3939836e0" or oc["id"]=="02442d4249f9a93464aaf8cd8d522faa869356707b5f1537a8d6def2af50058c5b" else encode({"result":"reject", "error_message": "The channel cannot be opened"}))(decode(openchannel))
   - disable-dns
   - database-upgrade=true
 
@@ -136,6 +134,7 @@ lspdGenericConfig:
   mempoolPriority: economy
   lspName: NumeraireSwissKnife
   pubKey: 02fc22cb2dd9c71b39ad246ae206259376e0127cce2192d4061abd0172b53f391b
+  externalIp: 46.101.68.120
 
 startupProbe:
   failureThreshold: 5

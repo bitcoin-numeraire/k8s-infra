@@ -49,6 +49,7 @@ spec:
               wallet=$(cat /secrets/wallet-db)
               bookkeeper-db=$(cat /secrets/bookkeeper-db)
               $(cat /configmap/lightning.conf)
+              lsp-channel-accept-script=(lambda oc: encode({"result":"continue"}) if oc["id"]=="031015a7839468a3c266d662d5bb21ea4cea24226936e2864a7ca4f2c3939836e0" or oc["id"]=="02442d4249f9a93464aaf8cd8d522faa869356707b5f1537a8d6def2af50058c5b" else encode({"result":"reject", "error_message": "The channel cannot be opened"}))(decode(openchannel))
               EOF
           volumeMounts:
             - name: configmap
@@ -81,17 +82,15 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              set -e # Exit if any command fails
-              apk add --no-cache curl &&
-              echo 'Creating NODES env variable' &&
-              EXTERNAL_IP=$(curl -s http://whatismyip.akamai.com/) &&
-              NODES_JSON="[ { \"name\": \"${LSP_NAME}\", \"nodePubkey\": \"${PUB_KEY}\", \"lspdPrivateKey\": \"${LSPD_PRIVATE_KEY}\", \"tokens\": [\"${TOKEN}\"], \"host\": \"${EXTERNAL_IP}:8888\", \"targetConf\": \"6\", \"minConfs\": \"0\", \"minHtlcMsat\": \"600\", \"baseFeeMsat\": \"1000\", \"feeRate\": \"0.000001\", \"timeLockDelta\": \"144\", \"channelFeePermyriad\": \"40\", \"channelMinimumFeeMsat\": \"2000000\", \"additionalChannelCapacity\": \"100000\", \"maxInactiveDuration\": \"3888000\",  \"cln\": { \"pluginAddress\": \"127.0.0.1:12312\", \"socketPath\": \"/root/.lightning/bitcoin/lightning-rpc\" } } ]" &&
+              NODES_JSON="[ { \"name\": \"${LSP_NAME}\", \"nodePubkey\": \"${PUB_KEY}\", \"lspdPrivateKey\": \"${LSPD_PRIVATE_KEY}\", \"tokens\": [\"${TOKEN}\"], \"host\": \"${EXTERNAL_IP}:9735\", \"targetConf\": \"6\", \"minConfs\": \"0\", \"minHtlcMsat\": \"600\", \"baseFeeMsat\": \"1000\", \"feeRate\": \"0.000001\", \"timeLockDelta\": \"144\", \"channelFeePermyriad\": \"40\", \"channelMinimumFeeMsat\": \"2000000\", \"additionalChannelCapacity\": \"100000\", \"maxInactiveDuration\": \"3888000\",  \"cln\": { \"pluginAddress\": \"127.0.0.1:12312\", \"socketPath\": \"/root/.lightning/bitcoin/lightning-rpc\" } } ]" &&
               echo $NODES_JSON > /etc/nodes/nodes.json
           env:
             - name: LSP_NAME
               value: {{.Values.lspdGenericConfig.lspName}}
             - name: PUB_KEY
               value: {{.Values.lspdGenericConfig.pubKey}}
+            - name: EXTERNAL_IP
+              value: {{.Values.lspdGenericConfig.externalIp}}
             - name: LSPD_PRIVATE_KEY
               valueFrom:
                 secretKeyRef:
@@ -110,7 +109,11 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              migrate -path /migrations -database $DATABASE_URL up
+              apk add --no-cache git &&
+              git clone https://github.com/breez/lspd.git /migrations &&
+              cd /migrations &&
+              git checkout v24.03.16 &&
+              migrate -path /migrations/postgresql/migrations -database $DATABASE_URL up
           env:
             - name: DATABASE_URL
               valueFrom:
@@ -228,10 +231,7 @@ spec:
         - name: nodes
           emptyDir: {}
         - name: migrations-volume
-          gitRepo:
-            repository: https://github.com/breez/lspd.git
-            directory: ./postgresql/migrations
-            revision: "v24.03.16"
+          emptyDir: {}
         - name: start-script-volume
           configMap:
             name: start-script
