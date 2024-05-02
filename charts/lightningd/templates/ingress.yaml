@@ -4,7 +4,9 @@ kind: Ingress
 metadata:
   name: {{ include "lightningd.fullname" . }}
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod" 
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"  # Ensures the backend protocol is set to gRPC
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"      # Redirects HTTP to HTTPS, crucial for secure gRPC
 spec:
   ingressClassName: nginx
   tls:
