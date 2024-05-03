@@ -136,6 +136,13 @@ lspdGenericConfig:
   pubKey: 02fc22cb2dd9c71b39ad246ae206259376e0127cce2192d4061abd0172b53f391b
   externalIp: 46.101.68.120
 
+dynamicFeesGenericConfig:
+  verbose: true
+  schedule: "0 */3 * * *"
+  image: registry.digitalocean.com/swissknife/dynamicfees:v0.0.1
+  mempoolApiBaseUrl: https://mempool.space/api/v1/
+  whattheFeeApiBaseUrl: https://whatthefee.io/api/v1/
+
 startupProbe:
   failureThreshold: 5
 
