@@ -1,7 +1,9 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: dynamic-fees-cronjob
+  name: {{ include "lightningd.fullname" . }}-dynamic-fees-cronjob
+  labels: 
+    {{- include "lightningd.labels" . | nindent 4 }}
 spec:
   schedule: {{.Values.dynamicFeesGenericConfig.schedule}}
   jobTemplate:
