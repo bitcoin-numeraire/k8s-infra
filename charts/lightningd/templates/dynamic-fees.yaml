@@ -24,6 +24,6 @@ spec:
               - name: DATABASE_URL
                 valueFrom:
                   secretKeyRef:
-                  name: lspd-conf
-                  key: database-url 
+                    name: lspd-conf
+                    key: database-url 
           restartPolicy: OnFailure  # Ensures that failed jobs are retried

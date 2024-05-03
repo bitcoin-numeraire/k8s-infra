@@ -137,9 +137,9 @@ lspdGenericConfig:
   externalIp: 46.101.68.120
 
 dynamicFeesGenericConfig:
-  verbose: true
-  schedule: "0 */3 * * *"
-  image: registry.digitalocean.com/swissknife/dynamicfees:v0.0.1
+  verbose: "False"
+  schedule: "*/2 * * * *"
+  image: registry.digitalocean.com/swissknife/dynamicfees:v0.0.2
   mempoolApiBaseUrl: https://mempool.space/api/v1/
   whattheFeeApiBaseUrl: https://whatthefee.io/
 
