@@ -141,7 +141,7 @@ dynamicFeesGenericConfig:
   schedule: "0 */3 * * *"
   image: registry.digitalocean.com/swissknife/dynamicfees:v0.0.1
   mempoolApiBaseUrl: https://mempool.space/api/v1/
-  whattheFeeApiBaseUrl: https://whatthefee.io/api/v1/
+  whattheFeeApiBaseUrl: https://whatthefee.io/
 
 startupProbe:
   failureThreshold: 5
