@@ -121,5 +121,5 @@ rtlConfig:
   dbDirectoryPath: "/var/lib/rtl"
   runePath: "/etc/rune/rune"
   lnServerUrl: "https://lightningd.lightning-mainnet.svc.cluster.local:3010"
-  loglevel: "DEBUG"
+  loglevel: "INFO"
   configPath: "/etc/multipass-config"

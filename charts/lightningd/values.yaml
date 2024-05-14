@@ -126,7 +126,6 @@ lightningdGenericConfig:
   - grpc-port=12313
   - experimental-anchors
   - disable-dns
-  - database-upgrade=true
   - clnrest-port=3010
   - clnrest-host=0.0.0.0
 
