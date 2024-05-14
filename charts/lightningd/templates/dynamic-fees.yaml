@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "lightningd.fullname" . }}-dynamic-fees-cronjob
+  labels: 
+    {{- include "lightningd.labels" . | nindent 4 }}
+spec:
+  schedule: "{{ .Values.dynamicFeesGenericConfig.schedule }}"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: dynamic-fees
+            image:  {{.Values.dynamicFeesGenericConfig.image}}
+            imagePullPolicy: IfNotPresent
+            env:
+              - name: VERBOSE
+                value: "{{ .Values.dynamicFeesGenericConfig.verbose }}"
+              - name: MEMPOOL_API_BASE_URL
+                value: "{{ .Values.dynamicFeesGenericConfig.mempoolApiBaseUrl }}"
+              - name: WHATTHEFEE_API_BASE_URL
+                value: "{{ .Values.dynamicFeesGenericConfig.whattheFeeApiBaseUrl }}"
+              - name: DATABASE_URL
+                valueFrom:
+                  secretKeyRef:
+                    name: lspd-conf
+                    key: database-url 
+          restartPolicy: OnFailure  # Ensures that failed jobs are retried

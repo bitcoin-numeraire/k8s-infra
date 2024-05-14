@@ -50,22 +50,13 @@ p2pService:
   port: 9735
   targetPort: 9735
 
-ingress:
-  enabled: false
-  className: ""
-  annotations:
-    {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+restService:
+  type: ClusterIP
+  port: 3010
+  targetPort: 3010
+
+grpcService:
+  port: 12313
 
 resources:
   {}
@@ -132,6 +123,12 @@ lightningdGenericConfig:
   - dev-allowdustreserve=true
   - plugin=/root/.lightning/plugins/lspd_cln_plugin
   - lsp-listen=127.0.0.1:12312
+  - grpc-port=12313
+  - experimental-anchors
+  - disable-dns
+  - database-upgrade=true
+  - clnrest-port=3010
+  - clnrest-host=0.0.0.0
 
 lspdGenericConfig:
   listenAddress: 0.0.0.0:8888
@@ -147,6 +144,14 @@ lspdGenericConfig:
   mempoolPriority: economy
   lspName: NumeraireSwissKnife
   pubKey: 02fc22cb2dd9c71b39ad246ae206259376e0127cce2192d4061abd0172b53f391b
+  externalIp: 46.101.68.120
+
+dynamicFeesGenericConfig:
+  verbose: "False"
+  schedule: "*/2 * * * *"
+  image: registry.digitalocean.com/swissknife/dynamicfees:v0.0.2
+  mempoolApiBaseUrl: https://mempool.space/api/v1/
+  whattheFeeApiBaseUrl: https://whatthefee.io/
 
 startupProbe:
   failureThreshold: 5

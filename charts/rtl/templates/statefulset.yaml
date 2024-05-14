@@ -1,0 +1,116 @@
+{{ $checksum := include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "rtl.fullname" . }}
+  labels:
+    {{- include "rtl.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "rtl.fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "rtl.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "rtl.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "rtl.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+      {{- if .Values.extraInitContainers }}
+      {{- toYaml .Values.extraInitContainers | nindent 8 }}
+      {{- end }}
+        - name: write-rune-file
+          image: alpine:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              RUNE_STR="LIGHTNING_RUNE=\"${RUNE}\"" && echo $RUNE_STR > /etc/rune/rune
+          env:
+            - name: RUNE
+              valueFrom:
+                secretKeyRef:
+                  name: rtl-config
+                  key: rune
+          volumeMounts:
+            - name: rune-volume
+              mountPath: /etc/rune
+        - name: add-multipass-config
+          image: alpine:latest
+          command:
+            - 'sh'
+            - '-c'
+            - |
+              # Ensure jq is available
+              apk add --no-cache jq
+              # Copy the original config to a writable location
+              cp /etc/config/RTL-Config.json /etc/multipass-config/RTL-Config.json
+              # Modify the configuration
+              jq --arg mp "$MULTI_PASS" '.multiPass = $mp' /etc/multipass-config/RTL-Config.json > /etc/multipass-config/temp.json && mv /etc/multipass-config/temp.json /etc/multipass-config/RTL-Config.json
+          env:
+            - name: MULTI_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: rtl-config
+                  key: multi-pass
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+              readOnly: true 
+            - name: multipass-config
+              mountPath: /etc/multipass-config
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: MALLOC_ARENA_MAX
+            value: "1"
+          - name: RTL_CONFIG_PATH
+            value: {{ .Values.rtlConfig.configPath }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

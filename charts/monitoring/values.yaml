@@ -52,13 +52,25 @@ prometheus:
 ## Deploy a Grafana instance
 ##
 grafana:
-  enabled: true
+  enabled: false
   adminPassword: prom-operator # Please change the default password in production !!!
   persistence:
     enabled: true
     storageClassName: do-block-storage
     accessModes: ["ReadWriteOnce"]
     size: 5Gi
+  ingress:
+    enabled: true
+    className: nginx
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    hosts:
+      - grafana.numeraire.tech
+    tls:
+      - hosts:
+          - grafana.numeraire.tech
+        secretName: grafana-tls
 
 ## Configuration for Alertmanager
 ## ref: https://prometheus.io/docs/alerting/alertmanager/

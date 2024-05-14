@@ -1,0 +1,125 @@
+# Default values for rtl.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: shahanafarooqui/rtl
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "0.15.0"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  {}
+  # fsGroup: 2000
+
+securityContext:
+  {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: rtl.swissknife.numeraire.tech
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: rtl-tls
+      hosts:
+        - rtl.swissknife.numeraire.tech
+
+resources:
+  {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+persistence:
+  enabled: true
+  storageClass: "do-block-storage-retain"
+  size: "5Gi"
+  accessMode: "ReadWriteOnce"
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+
+volumes:
+  - name: config-volume
+    configMap:
+      name: rtl-config
+  - name: multipass-config
+    emptyDir: {}
+  - name: rune-volume
+    emptyDir: {}
+  - name: rtl-data
+    persistentVolumeClaim:
+      claimName: "rtl"
+
+volumeMounts:
+  - name: multipass-config
+    mountPath: "/etc/multipass-config"
+  - name: rune-volume
+    mountPath: "/etc/rune"
+    readOnly: true
+  - name: rtl-data
+    mountPath: "/var/lib/rtl"
+    readOnly: false
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+rtlConfig:
+  dbDirectoryPath: "/var/lib/rtl"
+  runePath: "/etc/rune/rune"
+  lnServerUrl: "https://lightningd.lightning-mainnet.svc.cluster.local:3010"
+  loglevel: "DEBUG"
+  configPath: "/etc/multipass-config"
