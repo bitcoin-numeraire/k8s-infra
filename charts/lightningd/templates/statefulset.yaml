@@ -220,11 +220,8 @@ spec:
             - name: lspd
               containerPort: {{ .Values.lspdService.port }}
           volumeMounts:
-            - name: data
-              mountPath: /root/.lightning
-            - name: config
-              mountPath: /root/.lightning/config
-              subPath: config
+            - name: certs
+              mountPath: /root/.lightning/bitcoin
             - name: nodes
               mountPath: /etc/nodes
             - name: lspd
@@ -234,6 +231,8 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
+        - name: certs
+          emptyDir: {}
         - name: config
           emptyDir: {}
         - name: secrets
