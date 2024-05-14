@@ -51,9 +51,9 @@ p2pService:
   targetPort: 9735
 
 restService:
-type: ClusterIP
-port: 3010
-targetPort: 3010
+  type: ClusterIP
+  port: 3010
+  targetPort: 3010
 
 resources:
   {}
