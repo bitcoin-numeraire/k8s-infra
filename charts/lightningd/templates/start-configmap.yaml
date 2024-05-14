@@ -9,12 +9,7 @@ data:
     # Read nodes.json content and export it as an environment variable
     export NODES=$(cat /etc/nodes/nodes.json)
 
-    echo "Checking for CLN readiness..."
-    while ! nc -z lightningd 3010; do   
-        sleep 1
-    done
-
-    echo "CLN is up and running."
+    sleep 30
 
     # Start lspd
     chmod +x /root/.lightning/lspd/lspd

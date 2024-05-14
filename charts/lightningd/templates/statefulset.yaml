@@ -82,7 +82,7 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              NODES_JSON="[ { \"name\": \"${LSP_NAME}\", \"nodePubkey\": \"${PUB_KEY}\", \"lspdPrivateKey\": \"${LSPD_PRIVATE_KEY}\", \"tokens\": [\"${TOKEN}\"], \"host\": \"${EXTERNAL_IP}:9735\", \"targetConf\": \"6\", \"minConfs\": \"0\", \"minHtlcMsat\": \"600\", \"baseFeeMsat\": \"1000\", \"feeRate\": \"0.000001\", \"timeLockDelta\": \"144\", \"channelFeePermyriad\": \"40\", \"channelMinimumFeeMsat\": \"2000000\", \"additionalChannelCapacity\": \"100000\", \"maxInactiveDuration\": \"3888000\",  \"cln\": { \"pluginAddress\": \"127.0.0.1:12312\", \"grpcAddress\": \"127.0.0.1:12313\", \"caCert\": \"/root/.lightning/bitcoin/ca.pem\", \"clientCert"\: \"/root/.lightning/bitcoin/client.pem\", \"clientKey\": \"/root/.lightning/bitcoin/client-key.pem\" } } ]" &&
+              NODES_JSON="[ { \"name\": \"${LSP_NAME}\", \"nodePubkey\": \"${PUB_KEY}\", \"lspdPrivateKey\": \"${LSPD_PRIVATE_KEY}\", \"tokens\": [\"${TOKEN}\"], \"host\": \"${EXTERNAL_IP}:9735\", \"targetConf\": \"6\", \"minConfs\": \"0\", \"minHtlcMsat\": \"600\", \"baseFeeMsat\": \"1000\", \"feeRate\": \"0.000001\", \"timeLockDelta\": \"144\", \"channelFeePermyriad\": \"40\", \"channelMinimumFeeMsat\": \"2000000\", \"additionalChannelCapacity\": \"100000\", \"maxInactiveDuration\": \"3888000\",  \"cln\": { \"pluginAddress\": \"127.0.0.1:12312\", \"grpcAddress\": \"127.0.0.1:12313\", \"caCert\": \"/root/.lightning/bitcoin/ca.pem\", \"clientCert\": \"/root/.lightning/bitcoin/client.pem\", \"clientKey\": \"/root/.lightning/bitcoin/client-key.pem\" } } ]" &&
               echo $NODES_JSON > /etc/nodes/nodes.json
           env:
             - name: LSP_NAME
@@ -220,14 +220,17 @@ spec:
             - name: lspd
               containerPort: {{ .Values.lspdService.port }}
           volumeMounts:
-            - name: certs
-              mountPath: /root/.lightning/bitcoin
+            - name: data
+              mountPath: /root/.lightning
+              readOnly: true
             - name: nodes
               mountPath: /etc/nodes
+              readOnly: true
             - name: lspd
               mountPath: /root/.lightning/lspd
             - name: start-script-volume
               mountPath: /scripts
+              readOnly: true
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
