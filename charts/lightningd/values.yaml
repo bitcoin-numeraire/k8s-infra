@@ -50,6 +50,11 @@ p2pService:
   port: 9735
   targetPort: 9735
 
+restService:
+type: ClusterIP
+port: 3010
+targetPort: 3010
+
 resources:
   {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -119,6 +124,7 @@ lightningdGenericConfig:
   - experimental-anchors
   - disable-dns
   - database-upgrade=true
+  - clnrest-port=3010
 
 lspdGenericConfig:
   listenAddress: 0.0.0.0:8888
