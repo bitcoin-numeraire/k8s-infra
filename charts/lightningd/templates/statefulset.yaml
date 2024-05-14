@@ -66,7 +66,7 @@ spec:
             - |
               set -e # Exit if any command fails
               apk add --no-cache curl tar &&
-              curl -L "https://numeraire.fra1.cdn.digitaloceanspaces.com/lspd/lspd.tar.gz" -o /tmp/lspd.tar.gz &&
+              curl -L "https://github.com/bitcoin-numeraire/lspd/releases/download/v24.06/lspd-v24.05-linux-amd64.tar.gz" -o /tmp/lspd.tar.gz &&
               tar -xzf /tmp/lspd.tar.gz -C /tmp &&
               mkdir -p /plugins &&
               mv /tmp/lspd_cln_plugin /plugins/ &&
@@ -82,7 +82,7 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              NODES_JSON="[ { \"name\": \"${LSP_NAME}\", \"nodePubkey\": \"${PUB_KEY}\", \"lspdPrivateKey\": \"${LSPD_PRIVATE_KEY}\", \"tokens\": [\"${TOKEN}\"], \"host\": \"${EXTERNAL_IP}:9735\", \"targetConf\": \"6\", \"minConfs\": \"0\", \"minHtlcMsat\": \"600\", \"baseFeeMsat\": \"1000\", \"feeRate\": \"0.000001\", \"timeLockDelta\": \"144\", \"channelFeePermyriad\": \"40\", \"channelMinimumFeeMsat\": \"2000000\", \"additionalChannelCapacity\": \"100000\", \"maxInactiveDuration\": \"3888000\",  \"cln\": { \"pluginAddress\": \"127.0.0.1:12312\", \"socketPath\": \"/root/.lightning/bitcoin/lightning-rpc\" } } ]" &&
+              NODES_JSON="[ { \"name\": \"${LSP_NAME}\", \"nodePubkey\": \"${PUB_KEY}\", \"lspdPrivateKey\": \"${LSPD_PRIVATE_KEY}\", \"tokens\": [\"${TOKEN}\"], \"host\": \"${EXTERNAL_IP}:9735\", \"targetConf\": \"6\", \"minConfs\": \"0\", \"minHtlcMsat\": \"600\", \"baseFeeMsat\": \"1000\", \"feeRate\": \"0.000001\", \"timeLockDelta\": \"144\", \"channelFeePermyriad\": \"40\", \"channelMinimumFeeMsat\": \"2000000\", \"additionalChannelCapacity\": \"100000\", \"maxInactiveDuration\": \"3888000\",  \"cln\": { \"pluginAddress\": \"127.0.0.1:12312\", \"grpcAddress\": \"127.0.0.1:12313\", \"caCert\": \"/root/.lightning/bitcoin/ca.pem\", \"clientCert\": \"/root/.lightning/bitcoin/client.pem\", \"clientKey\": \"/root/.lightning/bitcoin/client-key.pem\" } } ]" &&
               echo $NODES_JSON > /etc/nodes/nodes.json
           env:
             - name: LSP_NAME
@@ -110,9 +110,9 @@ spec:
           args:
             - |
               apk add --no-cache git &&
-              git clone https://github.com/breez/lspd.git /migrations &&
+              git clone https://github.com/bitcoin-numeraire/lspd.git /migrations &&
               cd /migrations &&
-              git checkout v24.03.16 &&
+              git checkout v24.06 &&
               migrate -path /migrations/postgresql/migrations -database $DATABASE_URL up
           env:
             - name: DATABASE_URL
@@ -124,13 +124,61 @@ spec:
             - name: migrations-volume
               mountPath: /migrations
       containers:
-      {{- if .Values.sidecarContainers }}
-      {{- toYaml .Values.sidecarContainers | nindent 8 }}
-      {{- end }}
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: MALLOC_ARENA_MAX
+              value: "1"
+          ports:
+            - name: p2p
+              containerPort: {{ .Values.p2pService.port }}
+            - name: rest
+              containerPort: {{ .Values.restService.port }}
+            - name: grpc
+              containerPort: {{ .Values.grpcService.port }}
+          volumeMounts:
+            - name: data
+              mountPath: /root/.lightning
+            - name: config
+              mountPath: /root/.lightning/config
+              subPath: config
+            - name: plugins
+              mountPath: /root/.lightning/plugins
+          startupProbe:
+            exec:
+              command:
+              - lightning-cli
+              - getinfo
+            failureThreshold: {{.Values.startupProbe.failureThreshold}}
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command:
+              - lightning-cli
+              - getinfo
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: {{.Values.livenessProbe.failureThreshold}}
+          readinessProbe:
+            exec:
+              command:
+              - lightning-cli
+              - getinfo
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 3
+            failureThreshold: {{.Values.livenessProbe.failureThreshold}}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        - name: lspd
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "golang:1.22.3-bullseye"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["/bin/sh", "/scripts/start.sh"]
           env:
@@ -169,55 +217,25 @@ spec:
             - name: MEMPOOL_PRIORITY
               value: {{.Values.lspdGenericConfig.mempoolPriority}}
           ports:
-            - name: p2p
-              containerPort: {{ .Values.p2pService.port }}
             - name: lspd
               containerPort: {{ .Values.lspdService.port }}
-            - name: rest
-              containerPort: {{ .Values.restService.port }}
           volumeMounts:
             - name: data
               mountPath: /root/.lightning
-            - name: config
-              mountPath: /root/.lightning/config
-              subPath: config
-            - name: plugins
-              mountPath: /root/.lightning/plugins
+              readOnly: true
             - name: nodes
               mountPath: /etc/nodes
+              readOnly: true
             - name: lspd
               mountPath: /root/.lightning/lspd
             - name: start-script-volume
               mountPath: /scripts
-          startupProbe:
-            exec:
-              command:
-              - lightning-cli
-              - getinfo
-            failureThreshold: {{.Values.startupProbe.failureThreshold}}
-            periodSeconds: 10
-            timeoutSeconds: 3
-          livenessProbe:
-            exec:
-              command:
-              - lightning-cli
-              - getinfo
-            initialDelaySeconds: 120
-            periodSeconds: 30
-            timeoutSeconds: 3
-            failureThreshold: {{.Values.livenessProbe.failureThreshold}}
-          readinessProbe:
-            exec:
-              command:
-              - lightning-cli
-              - getinfo
-            periodSeconds: 30
-            successThreshold: 1
-            timeoutSeconds: 3
-            failureThreshold: {{.Values.livenessProbe.failureThreshold}}
+              readOnly: true
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
+        - name: certs
+          emptyDir: {}
         - name: config
           emptyDir: {}
         - name: secrets
