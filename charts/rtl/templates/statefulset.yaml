@@ -39,17 +39,40 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              RUNE_STR="LIGHTNING_RUNE=${RUNE}" &&
-              echo $RUNE_STR > /etc/rune/rune.conf
+              RUNE_STR="LIGHTNING_RUNE=\"${RUNE}\"" && echo $RUNE_STR > /etc/rune/rune
           env:
             - name: RUNE
               valueFrom:
                 secretKeyRef:
-                  name: rtl-conf
+                  name: rtl-config
                   key: rune
           volumeMounts:
             - name: rune-volume
               mountPath: /etc/rune
+        - name: add-multipass-config
+          image: alpine:latest
+          command:
+            - 'sh'
+            - '-c'
+            - |
+              # Ensure jq is available
+              apk add --no-cache jq
+              # Copy the original config to a writable location
+              cp /etc/config/RTL-Config.json /etc/multipass-config/RTL-Config.json
+              # Modify the configuration
+              jq --arg mp "$MULTI_PASS" '.multiPass = $mp' /etc/multipass-config/RTL-Config.json > /etc/multipass-config/temp.json && mv /etc/multipass-config/temp.json /etc/multipass-config/RTL-Config.json
+          env:
+            - name: MULTI_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: rtl-config
+                  key: multi-pass
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+              readOnly: true 
+            - name: multipass-config
+              mountPath: /etc/multipass-config
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -59,6 +82,8 @@ spec:
           env:
           - name: MALLOC_ARENA_MAX
             value: "1"
+          - name: RTL_CONFIG_PATH
+            value: {{ .Values.rtlConfig.configPath }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

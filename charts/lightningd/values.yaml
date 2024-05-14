@@ -125,6 +125,7 @@ lightningdGenericConfig:
   - disable-dns
   - database-upgrade=true
   - clnrest-port=3010
+  - clnrest-host=0.0.0.0
 
 lspdGenericConfig:
   listenAddress: 0.0.0.0:8888

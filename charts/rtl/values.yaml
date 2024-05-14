@@ -94,17 +94,17 @@ volumes:
   - name: config-volume
     configMap:
       name: rtl-config
+  - name: multipass-config
+    emptyDir: {}
   - name: rune-volume
-    configMap:
-      name: rtl-rune
+    emptyDir: {}
   - name: rtl-data
     persistentVolumeClaim:
-      claimName: "rtl-pvc"
+      claimName: "rtl"
 
 volumeMounts:
-  - name: config-volume
-    mountPath: "/app/RTL"
-    readOnly: true
+  - name: multipass-config
+    mountPath: "/etc/multipass-config"
   - name: rune-volume
     mountPath: "/etc/rune"
     readOnly: true
@@ -120,6 +120,7 @@ affinity: {}
 
 rtlConfig:
   dbDirectoryPath: "/var/lib/rtl"
-  runePath: "/etc/rune/rune.conf"
+  runePath: "/etc/rune/rune"
   lnServerUrl: "https://lightningd.lightning-mainnet.svc.cluster.local:3010"
   loglevel: "DEBUG"
+  configPath: "/etc/multipass-config"

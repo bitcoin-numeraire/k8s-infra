@@ -173,6 +173,8 @@ spec:
               containerPort: {{ .Values.p2pService.port }}
             - name: lspd
               containerPort: {{ .Values.lspdService.port }}
+            - name: rest
+              containerPort: {{ .Values.restService.port }}
           volumeMounts:
             - name: data
               mountPath: /root/.lightning

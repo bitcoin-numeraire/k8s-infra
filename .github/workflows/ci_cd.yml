@@ -46,12 +46,12 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           helm upgrade kube-prometheus-stack prometheus-community/kube-prometheus-stack --version 55.7.0 -n kube-prometheus-stack --values charts/monitoring/values.yaml
-          helm upgrade --install cert-manager charts/networking/ -n cert-manager --set ingress-nginx.enabled=false
-          helm upgrade --install ingress-nginx charts/networking/ -n ingress-nginx --set cert-manager.enabled=false,installClusterIssuer=false
-          helm upgrade --install bitcoind charts/bitcoind/ -n bitcoin-mainnet --create-namespace
-          helm upgrade --install lightningd charts/lightningd/ -n lightning-mainnet --create-namespace
-          helm upgrade --install rtl charts/rtl/ -n lightning-mainnet
-          helm upgrade --install pgadmin4 charts/database/ -n pgadmin --create-namespace
+          helm upgrade --install cert-manager charts/networking/ -f charts/networking/values.yaml -n cert-manager --set ingress-nginx.enabled=false
+          helm upgrade --install ingress-nginx charts/networking/ -f charts/networking/values.yaml -n ingress-nginx --set cert-manager.enabled=false,installClusterIssuer=false
+          helm upgrade --install bitcoind charts/bitcoind/ -f charts/bitcoind/values.yaml -n bitcoin-mainnet --create-namespace
+          helm upgrade --install lightningd charts/lightningd/ -f charts/lightningd/values.yaml -n lightning-mainnet --create-namespace
+          helm upgrade --install rtl charts/rtl/ -f charts/rtl/values.yaml -n lightning-mainnet
+          helm upgrade --install pgadmin4 charts/database/ -f charts/database/values.yaml -n pgadmin --create-namespace
       - name: Deploy Testnet
         if: github.ref == 'refs/heads/development'
         run: |

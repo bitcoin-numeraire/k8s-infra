@@ -21,11 +21,11 @@ data:
           "lnNode": "NumeraireSwissknife",
           "lnImplementation": "CLN",
           "Authentication": {
-            "runePath": "{{ .Values.rtlConfig.runePath }}",
+            "runePath": "{{ .Values.rtlConfig.runePath }}"
           },
           "Settings": {
             "userPersona": "OPERATOR",
-            "themeMode": "DAY",
+            "themeMode": "NIGHT",
             "themeColor": "PURPLE",
             "bitcoindConfigPath": "",
             "logLevel": "{{ .Values.rtlConfig.loglevel }}",
