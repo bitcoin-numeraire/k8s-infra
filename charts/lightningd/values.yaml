@@ -116,7 +116,7 @@ lightningdGenericConfig:
   - rgb=55C692
   - fee-base=800
   - fee-per-satoshi=8
-  - min-capacity-sat=1000000
+  - min-capacity-sat=10000
   - ignore-fee-limits=true
   - max-concurrent-htlcs=30
   - funding-confirms=3
@@ -126,7 +126,6 @@ lightningdGenericConfig:
   - grpc-port=12313
   - experimental-anchors
   - disable-dns
-  - database-upgrade=true
   - clnrest-port=3010
   - clnrest-host=0.0.0.0
 
