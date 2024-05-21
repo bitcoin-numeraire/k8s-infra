@@ -116,7 +116,7 @@ lightningdGenericConfig:
   - rgb=55C692
   - fee-base=800
   - fee-per-satoshi=8
-  - min-capacity-sat=1000000
+  - min-capacity-sat=10000
   - ignore-fee-limits=true
   - max-concurrent-htlcs=30
   - funding-confirms=3
