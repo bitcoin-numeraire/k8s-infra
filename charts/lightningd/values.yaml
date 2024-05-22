@@ -132,7 +132,7 @@ lightningdGenericConfig:
 lspdGenericConfig:
   listenAddress: 0.0.0.0:8888
   awsRegion: eu-central-1
-  awsAccessKey: AKIATCKAS3WR3C5GH3QK
+  awsAccessKeyId: AKIATCKAS3WR3C5GH3QK
   openChannelNotificationTo: "NumeraireSwissKnife <lightning@numeraire.tech>"
   openChannelNotificationCC: "Dario Varela <dario.varela@numeraire.tech>"
   openChannelNotificationFrom: "noreply@numeraire.tech"
