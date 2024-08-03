@@ -1,0 +1,122 @@
+# Default values for rtl.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: registry.digitalocean.com/swissknife/swissknife
+  pullPolicy: IfNotPresent
+  tag: "v0.1.0"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  {}
+  # fsGroup: 2000
+
+securityContext:
+  {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: api.numeraire.tech
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: swissknife-tls
+      hosts:
+        - api.numeraire.tech
+
+resources:
+  {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+livenessProbe:
+  httpGet:
+    path: /v1/system/health
+    port: http
+readinessProbe:
+  httpGet:
+    path: /v1/system/ready
+    port: http
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+volumes:
+  - name: config-volume
+    configMap:
+      name: swissknife-config
+
+volumeMounts:
+  - name: config-volume
+    configMap:
+      name: swissknife-config
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+swissknifeConfig:
+  - |
+    invoice_expiry = "24h"
+    ln_provider = "clnrest"
+    auth_provider = "oauth2"
+
+    [cln_rest_config]
+    endpoint = "https://lightningd.lightning-mainnet.svc.cluster.local:3010"
+
+    [logging]
+    level = "debug"
+    filter = "swissknife=debug"
+
+    [oauth2]
+    domain = "dev-z3xohtidpayxvzid.us.auth0.com"
