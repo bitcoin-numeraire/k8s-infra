@@ -96,8 +96,7 @@ volumes:
 
 volumeMounts:
   - name: config-volume
-    configMap:
-      name: swissknife-config
+    mountPath: /config
 
 nodeSelector: {}
 
