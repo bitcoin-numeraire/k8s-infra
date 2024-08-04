@@ -6,7 +6,6 @@ metadata:
     {{- include "swissknife.labels" . | nindent 4 }}
 data:
   production.toml: |-
-  {{- range .Values.swissknifeConfig }}
-    {{ . }}
-  {{- end }}
-
+    {{- range .Values.swissknifeConfig }}
+    {{ . | nindent 4 }}
+    {{- end }}
