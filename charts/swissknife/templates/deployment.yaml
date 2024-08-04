@@ -42,6 +42,11 @@ spec:
               secretKeyRef:
                 name: swissknife-config
                 key: database-url
+          - name: SWISSKNIFE_CLN_REST_CONFIG__RUNE
+            valueFrom:
+              secretKeyRef:
+                name: swissknife-config
+                key: rune
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}

@@ -110,6 +110,7 @@ swissknifeConfig:
     invoice_expiry = "24h"
     ln_provider = "clnrest"
     auth_provider = "oauth2"
+    host = "https://api.numeraire.tech"
 
     [cln_rest_config]
     endpoint = "https://lightningd.lightning-mainnet.svc.cluster.local:3010"
