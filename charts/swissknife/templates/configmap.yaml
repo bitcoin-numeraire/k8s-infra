@@ -5,7 +5,5 @@ metadata:
   labels:
     {{- include "swissknife.labels" . | nindent 4 }}
 data:
-  production.toml: |-
-    {{- range .Values.swissknifeConfig }}
-    {{ . | nindent 4 }}
-    {{- end }}
+  production.yml: |-
+    {{- .Values.swissknifeConfig | toYaml | nindent 4 }}
