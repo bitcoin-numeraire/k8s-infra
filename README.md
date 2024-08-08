@@ -12,6 +12,7 @@ This repository contains Helm charts for deploying Numeraire Bitcoin services an
   - `rtl/`: Ride The Lightning dashboard for CLN
   - `database/`: PostgreSQL database
   - `swissknife/`: Numeraire SwissKnife API
+  - `dashboard/`: Numeraire SwissKnife Dashboard
 
 ## Prerequisites
 

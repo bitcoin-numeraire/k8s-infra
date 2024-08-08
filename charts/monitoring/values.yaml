@@ -52,7 +52,7 @@ prometheus:
 ## Deploy a Grafana instance
 ##
 grafana:
-  enabled: false
+  enabled: true
   adminPassword: prom-operator # Please change the default password in production !!!
   persistence:
     enabled: true

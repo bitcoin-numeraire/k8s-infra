@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "swissknife.fullname" . }}
+  name: {{ include "dashboard.fullname" . }}
   labels:
-    {{- include "swissknife.labels" . | nindent 4 }}
+    {{- include "dashboard.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "swissknife.selectorLabels" . | nindent 6 }}
+      {{- include "dashboard.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,11 +18,16 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "swissknife.labels" . | nindent 8 }}
+        {{- include "dashboard.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "dashboard.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -31,17 +36,6 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          env:
-          - name: SWISSKNIFE_DATABASE__URL
-            valueFrom:
-              secretKeyRef:
-                name: swissknife-config
-                key: database-url
-          - name: SWISSKNIFE_CLN_REST_CONFIG__RUNE
-            valueFrom:
-              secretKeyRef:
-                name: swissknife-config
-                key: rune
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
