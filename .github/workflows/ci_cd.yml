@@ -53,6 +53,7 @@ jobs:
           helm upgrade --install rtl charts/rtl/ -f charts/rtl/values.yaml -n lightning-mainnet
           helm upgrade --install pgadmin4 charts/database/ -f charts/database/values.yaml -n pgadmin --create-namespace
           helm upgrade --install swissknife charts/swissknife/ -f charts/swissknife/values.yaml -n swissknife --create-namespace
+          helm upgrade --install swissknife charts/dashboard/ -f charts/dashboard/values.yaml -n swissknife --create-namespace
       - name: Deploy Testnet
         if: github.ref == 'refs/heads/development'
         run: |
