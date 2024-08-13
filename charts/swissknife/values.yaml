@@ -93,11 +93,17 @@ volumes:
   - name: config-volume
     configMap:
       name: swissknife-config
+  - name: ca-cert-volume
+    secret:
+      secretName: swissknife-config
 
 volumeMounts:
   - name: config-volume
     mountPath: /config/production.yml
     subPath: production.yml
+  - name: ca-cert-volume
+    mountPath: /certs/ca.pem
+    subPath: ca.pem
 
 nodeSelector: {}
 
@@ -112,6 +118,7 @@ swissknifeConfig:
   host: https://api.numeraire.tech
   cln_rest_config:
     endpoint: https://lightningd.lightning-mainnet.svc.cluster.local:3010
+    ca_cert_path: /certs/ca.pem
     accept_invalid_certs: true
   oauth2:
     domain: dev-z3xohtidpayxvzid.us.auth0.com
