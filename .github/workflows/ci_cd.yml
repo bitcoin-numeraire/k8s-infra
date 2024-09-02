@@ -54,6 +54,8 @@ jobs:
           helm upgrade --install pgadmin4 charts/database/ -f charts/database/values.yaml -n pgadmin --create-namespace
           helm upgrade --install swissknife charts/swissknife/ -f charts/swissknife/values.yaml -n swissknife --create-namespace
           helm upgrade --install dashboard charts/dashboard/ -f charts/dashboard/values.yaml -n swissknife
+          helm upgrade --install docs charts/docs/ -f charts/docs/values.yaml -n docs --create-namespace
+
       - name: Deploy Testnet
         if: github.ref == 'refs/heads/development'
         run: |
