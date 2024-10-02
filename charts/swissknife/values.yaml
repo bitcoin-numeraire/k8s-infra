@@ -121,4 +121,4 @@ swissknifeConfig:
     ca_cert_path: /certs/ca.pem
     accept_invalid_hostnames: true
   oauth2:
-    domain: dev-z3xohtidpayxvzid.us.auth0.com
+    domain: auth.numeraire.tech
