@@ -123,6 +123,7 @@ lightningdGenericConfig:
   - dev-allowdustreserve=true
   - plugin=/root/.lightning/plugins/lspd_cln_plugin
   - lsp-listen=127.0.0.1:12312
+  - experimental-anchors
   - grpc-port=12313
   - disable-dns
   - clnrest-port=3010
