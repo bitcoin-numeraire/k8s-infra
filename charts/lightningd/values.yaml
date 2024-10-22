@@ -10,7 +10,7 @@ image:
   repository: elementsproject/lightningd
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v24.08.2"
+  tag: "v24.05"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -123,8 +123,8 @@ lightningdGenericConfig:
   - dev-allowdustreserve=true
   - plugin=/root/.lightning/plugins/lspd_cln_plugin
   - lsp-listen=127.0.0.1:12312
-  - grpc-port=12313
   - experimental-anchors
+  - grpc-port=12313
   - disable-dns
   - clnrest-port=3010
   - clnrest-host=0.0.0.0
