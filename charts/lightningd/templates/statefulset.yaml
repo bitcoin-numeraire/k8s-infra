@@ -66,7 +66,7 @@ spec:
             - |
               set -e # Exit if any command fails
               apk add --no-cache curl tar &&
-              curl -L "https://github.com/bitcoin-numeraire/lspd/releases/download/v24.06/lspd-v24.05-linux-amd64.tar.gz" -o /tmp/lspd.tar.gz &&
+              curl -L "https://github.com/breez/lspd/releases/download/v24.11.21/lspd-v24.11.21-linux-amd64.tar.gz" -o /tmp/lspd.tar.gz &&
               tar -xzf /tmp/lspd.tar.gz -C /tmp &&
               mkdir -p /plugins &&
               mv /tmp/lspd_cln_plugin /plugins/ &&
@@ -112,7 +112,7 @@ spec:
               apk add --no-cache git &&
               git clone https://github.com/bitcoin-numeraire/lspd.git /migrations &&
               cd /migrations &&
-              git checkout v24.06 &&
+              git checkout v24.11.1 &&
               migrate -path /migrations/postgresql/migrations -database $DATABASE_URL up
           env:
             - name: DATABASE_URL
