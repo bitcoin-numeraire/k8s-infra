@@ -47,7 +47,6 @@ spec:
               cat <<EOF > /root/.lightning/config
               bitcoin-rpcpassword=$(cat /secrets/bitcoinrpcpassword)
               wallet=$(cat /secrets/wallet-db)
-              bookkeeper-db=$(cat /secrets/bookkeeper-db)
               $(cat /configmap/lightning.conf)
               lsp-channel-accept-script=(lambda oc: encode({"result":"continue"}) if oc["id"]=="031015a7839468a3c266d662d5bb21ea4cea24226936e2864a7ca4f2c3939836e0" or oc["id"]=="02442d4249f9a93464aaf8cd8d522faa869356707b5f1537a8d6def2af50058c5b" else encode({"result":"reject", "error_message": "The channel cannot be opened"}))(decode(openchannel))
               EOF
@@ -147,32 +146,32 @@ spec:
               subPath: config
             - name: plugins
               mountPath: /root/.lightning/plugins
-          startupProbe:
-            exec:
-              command:
-              - lightning-cli
-              - getinfo
-            failureThreshold: {{.Values.startupProbe.failureThreshold}}
-            periodSeconds: 10
-            timeoutSeconds: 3
-          livenessProbe:
-            exec:
-              command:
-              - lightning-cli
-              - getinfo
-            initialDelaySeconds: 120
-            periodSeconds: 30
-            timeoutSeconds: 3
-            failureThreshold: {{.Values.livenessProbe.failureThreshold}}
-          readinessProbe:
-            exec:
-              command:
-              - lightning-cli
-              - getinfo
-            periodSeconds: 30
-            successThreshold: 1
-            timeoutSeconds: 3
-            failureThreshold: {{.Values.livenessProbe.failureThreshold}}
+          # startupProbe:
+          #   exec:
+          #     command:
+          #     - lightning-cli
+          #     - getinfo
+          #   failureThreshold: {{.Values.startupProbe.failureThreshold}}
+          #   periodSeconds: 10
+          #   timeoutSeconds: 3
+          # livenessProbe:
+          #   exec:
+          #     command:
+          #     - lightning-cli
+          #     - getinfo
+          #   initialDelaySeconds: 120
+          #   periodSeconds: 30
+          #   timeoutSeconds: 3
+          #   failureThreshold: {{.Values.livenessProbe.failureThreshold}}
+          # readinessProbe:
+          #   exec:
+          #     command:
+          #     - lightning-cli
+          #     - getinfo
+          #   periodSeconds: 30
+          #   successThreshold: 1
+          #   timeoutSeconds: 3
+          #   failureThreshold: {{.Values.livenessProbe.failureThreshold}}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         - name: lspd
