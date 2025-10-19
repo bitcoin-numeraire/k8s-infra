@@ -33,16 +33,7 @@ podSecurityContext:
 securityContext: {}
 
 ingress:
-  enabled: true
-
-lspdService:
-  host: lspd.swissknife.numeraire.tech
-  secretName: lspd-tls
-  staticIP: ""
-  type: ClusterIP
-  annotations: {}
-  port: 8888
-  targetPort: 8888
+  enabled: false
 
 p2pService:
   staticIP: ""
@@ -121,37 +112,12 @@ lightningdGenericConfig:
   - max-concurrent-htlcs=30
   - funding-confirms=3
   - dev-allowdustreserve=true
-  - plugin=/root/.lightning/plugins/lspd_cln_plugin
-  - lsp-listen=127.0.0.1:12312
   - experimental-anchors
   - grpc-port=12313
   - disable-dns
   - clnrest-port=3010
   - clnrest-host=0.0.0.0
   - log-level=debug
-
-lspdGenericConfig:
-  listenAddress: 0.0.0.0:8888
-  awsRegion: eu-central-1
-  awsAccessKeyId: AKIATCKAS3WR3C5GH3QK
-  openChannelNotificationTo: "NumeraireSwissKnife <lightning@numeraire.tech>"
-  openChannelNotificationCC: "Dario Varela <dario.varela@numeraire.tech>"
-  openChannelNotificationFrom: "noreply@numeraire.tech"
-  channelmismatchNotificationTo: "NumeraireSwissKnife <lightning@numeraire.tech>"
-  channelmismatchNotificationCC: "Dario Varela <dario.varea@numeraire.tech>"
-  channelmismatchNotificationFrom: "noreply@numeraire.tech"
-  mempoolApiBaseUrl: https://mempool.space/api/v1/
-  mempoolPriority: economy
-  lspName: NumeraireSwissKnife
-  pubKey: 02fc22cb2dd9c71b39ad246ae206259376e0127cce2192d4061abd0172b53f391b
-  externalIp: 46.101.68.120
-
-dynamicFeesGenericConfig:
-  verbose: "False"
-  schedule: "*/2 * * * *"
-  image: registry.digitalocean.com/swissknife/dynamicfees:v0.0.2
-  mempoolApiBaseUrl: https://mempool.space/api/v1/
-  whattheFeeApiBaseUrl: https://whatthefee.io/
 
 startupProbe:
   failureThreshold: 5
