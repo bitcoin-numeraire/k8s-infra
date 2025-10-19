@@ -47,7 +47,6 @@ spec:
               cat <<EOF > /root/.lightning/config
               bitcoin-rpcpassword=$(cat /secrets/bitcoinrpcpassword)
               wallet=$(cat /secrets/wallet-db)
-              bookkeeper-db=$(cat /secrets/bookkeeper-db)
               $(cat /configmap/lightning.conf)
               EOF
           volumeMounts:
