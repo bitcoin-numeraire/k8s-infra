@@ -41,6 +41,45 @@ To update your Lightning node deployment, adjust `values.yaml` as needed and the
 helm upgrade lightningd ./charts/lightningd -f charts/lightningd/values.yaml
 ```
 
+## Tor Support
+
+This chart includes optional Tor support that allows your CLN node to connect to Tor-only Lightning nodes without advertising your own node on the Tor network.
+
+### Enabling Tor Support
+
+To enable Tor support, set the following in your values file:
+
+```yaml
+tor:
+  enabled: true
+  # Tor proxy settings for outgoing connections
+  proxyHost: "127.0.0.1"
+  proxyPort: 9050
+  # Always use proxy for connections (recommended for Tor-only nodes)
+  alwaysUseProxy: true
+```
+
+### How It Works
+
+When Tor support is enabled:
+- A Tor proxy container runs alongside your CLN node
+- CLN is configured to route all outgoing connections through the Tor proxy
+- Your node can connect to peers that only advertise Tor addresses
+- Your node does NOT advertise on Tor (outbound-only Tor support)
+
+### Configuration Details
+
+The Tor configuration includes:
+- `ExitPolicy reject *:*` - Prevents your node from becoming a Tor exit node
+- `SocksPolicy accept 127.0.0.1/32` - Only allows local connections to the proxy
+- `always-use-proxy=true` - Forces all CLN connections through Tor
+
+### Example Deployment with Tor
+
+```sh
+helm upgrade lightningd ./charts/lightningd --set tor.enabled=true
+```
+
 ## Security
 
 Review and adjust the security settings provided by the chart according to your security standards, especially regarding the database connection and `bitcoind` access credentials.

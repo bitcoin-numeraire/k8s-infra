@@ -9,4 +9,22 @@ data:
   {{- range .Values.lightningdGenericConfig }}
     {{ . }}
   {{- end }}
+  {{- if .Values.tor.enabled }}
+    proxy={{ .Values.tor.proxyHost }}:{{ .Values.tor.proxyPort }}
+    {{- if .Values.tor.alwaysUseProxy }}
+    always-use-proxy=true
+    {{- end }}
+  {{- end }}
+  tor.conf: |-
+  {{- if .Values.tor.enabled }}
+    # Tor configuration for CLN
+    SocksPort 0.0.0.0:9050
+    # Prevent this node from becoming a Tor exit node
+    ExitPolicy reject *:*
+    # Only allow connections to localhost
+    SocksPolicy accept 127.0.0.1/32
+    SocksPolicy reject *
+    # Log level
+    Log notice stdout
+  {{- end }}
 
