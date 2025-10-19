@@ -112,7 +112,6 @@ lightningdGenericConfig:
   - max-concurrent-htlcs=30
   - funding-confirms=3
   - dev-allowdustreserve=true
-  - experimental-anchors
   - grpc-port=12313
   - disable-dns
   - clnrest-port=3010
