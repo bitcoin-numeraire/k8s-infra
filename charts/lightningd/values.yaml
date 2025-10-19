@@ -73,7 +73,7 @@ persistence:
   ##
   # storageClass: "-"
   accessMode: ReadWriteOnce
-  size: 5Gi
+  size: 10Gi
 
 nodeSelector: {}
 
