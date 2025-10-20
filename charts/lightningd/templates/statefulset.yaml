@@ -59,11 +59,11 @@ spec:
       containers:
         {{- if .Values.tor.enabled }}
         - name: tor
-          image: dperson/torproxy:latest
+          image: ghcr.io/peterdavehello/tor-socks-proxy:latest
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: tor-socks
-              containerPort: 9050
+              containerPort: 9150
           volumeMounts:
             - name: configmap
               mountPath: /etc/tor/torrc
