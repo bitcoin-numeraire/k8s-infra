@@ -57,6 +57,25 @@ spec:
             - name: config
               mountPath: /root/.lightning/
       containers:
+        {{- if .Values.tor.enabled }}
+        - name: tor
+          image: ghcr.io/peterdavehello/tor-socks-proxy:latest
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: tor-socks
+              containerPort: 9150
+          volumeMounts:
+            - name: configmap
+              mountPath: /etc/tor/torrc
+              subPath: tor.conf
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+        {{- end }}
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}

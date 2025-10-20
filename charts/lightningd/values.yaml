@@ -97,6 +97,15 @@ labels: {}
 podLabels:
   app: lightningd
 
+# Tor support configuration
+tor:
+  enabled: true
+  # Tor proxy settings for outgoing connections
+  proxyHost: "127.0.0.1"
+  proxyPort: 9150
+  # Always use proxy for connections (recommended for Tor-only nodes)
+  alwaysUseProxy: false
+
 lightningdGenericConfig:
   - developer
   - bitcoin-rpcuser=rpcuser

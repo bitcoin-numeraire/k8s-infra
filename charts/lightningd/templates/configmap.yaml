@@ -9,4 +9,15 @@ data:
   {{- range .Values.lightningdGenericConfig }}
     {{ . }}
   {{- end }}
+  {{- if .Values.tor.enabled }}
+    proxy={{ .Values.tor.proxyHost }}:{{ .Values.tor.proxyPort }}
+    {{- if .Values.tor.alwaysUseProxy }}
+    always-use-proxy=true
+    {{- end }}
+  {{- end }}
+  tor.conf: |-
+  {{- if .Values.tor.enabled }}
+    SocksPort 127.0.0.1:9150
+    Log notice stdout
+  {{- end }}
 
