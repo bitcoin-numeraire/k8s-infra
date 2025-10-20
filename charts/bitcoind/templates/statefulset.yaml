@@ -67,6 +67,11 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bitcoind"]
+          args:
+            - -conf=/data/.bitcoin/bitcoin.conf
+            - -datadir=/data/.bitcoin
+            - -printtoconsole
           env:
           - name: MALLOC_ARENA_MAX
             value: "1"
