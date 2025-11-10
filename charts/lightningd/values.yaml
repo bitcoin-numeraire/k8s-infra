@@ -99,7 +99,7 @@ podLabels:
 
 # Tor support configuration
 tor:
-  enabled: true
+  enabled: false
   # Tor proxy settings for outgoing connections
   proxyHost: "127.0.0.1"
   proxyPort: 9150
