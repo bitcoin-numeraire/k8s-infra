@@ -36,7 +36,8 @@ ingress:
   enabled: false
 
 p2pService:
-  staticIP: ""
+  # Reserve this IP in your cloud provider to prevent it from changing
+  staticIP: "46.101.68.120"
   type: LoadBalancer
   port: 9735
   targetPort: 9735
@@ -99,11 +100,12 @@ podLabels:
 
 # Tor support configuration
 tor:
-  enabled: false
+  enabled: true
   # Tor proxy settings for outgoing connections
   proxyHost: "127.0.0.1"
   proxyPort: 9150
   # Always use proxy for connections (recommended for Tor-only nodes)
+  # false = only use Tor for .onion addresses, clearnet for IPv4/IPv6
   alwaysUseProxy: false
 
 lightningdGenericConfig:
@@ -122,8 +124,11 @@ lightningdGenericConfig:
   - funding-confirms=3
   - dev-allowdustreserve=true
   - grpc-port=12313
-  - disable-dns
   - clnrest-port=3010
+  # Bind to all interfaces to accept incoming connections
+  - bind-addr=0.0.0.0:9735
+  # Announce the LoadBalancer's external IP so peers can connect
+  - announce-addr=46.101.68.120:9735
   - clnrest-host=0.0.0.0
   - log-level=debug
 
