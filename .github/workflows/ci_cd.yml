@@ -14,9 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     name: Lint Helm Charts
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.0
       - name: Set up Helm
-        uses: azure/setup-helm@v4.1.0
+        uses: azure/setup-helm@v5.0.0
         with:
           version: "latest"
       - name: Lint Helm Charts
@@ -28,14 +28,14 @@ jobs:
     needs: lint-helm
     if: github.event_name == 'push'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.0
       - name: Configure kubeconfig
-        uses: azure/k8s-set-context@v4
+        uses: azure/k8s-set-context@v5.0.0
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}
       - name: Set up Helm
-        uses: azure/setup-helm@v4.1.0
+        uses: azure/setup-helm@v5.0.0
         with:
           version: "latest"
       - name: Add prometheus-community Helm repository
