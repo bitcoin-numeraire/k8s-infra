@@ -46,6 +46,9 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           helm upgrade kube-prometheus-stack prometheus-community/kube-prometheus-stack --version 55.7.0 -n kube-prometheus-stack --values charts/monitoring/values.yaml
+          # cert-manager CRDs are managed separately (installCRDs=false), so upgrade them to match the chart version BEFORE the controller rollout.
+          # https://cert-manager.io/docs/installation/upgrade/#crds-managed-separately
+          kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.20.2/cert-manager.crds.yaml
           helm upgrade --install cert-manager charts/networking/ -f charts/networking/values.yaml -n cert-manager --set ingress-nginx.enabled=false
           helm upgrade --install ingress-nginx charts/networking/ -f charts/networking/values.yaml -n ingress-nginx --set cert-manager.enabled=false,installClusterIssuer=false
           helm upgrade --install bitcoind charts/bitcoind/ -f charts/bitcoind/values.yaml -n bitcoin-mainnet --create-namespace
