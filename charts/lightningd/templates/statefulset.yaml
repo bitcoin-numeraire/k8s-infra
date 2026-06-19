@@ -103,8 +103,8 @@ spec:
               - lightning-cli
               - getinfo
             failureThreshold: {{.Values.startupProbe.failureThreshold}}
-            periodSeconds: 10
-            timeoutSeconds: 3
+            periodSeconds: 30
+            timeoutSeconds: 30
           livenessProbe:
             exec:
               command:
@@ -112,7 +112,7 @@ spec:
               - getinfo
             initialDelaySeconds: 120
             periodSeconds: 30
-            timeoutSeconds: 3
+            timeoutSeconds: 30
             failureThreshold: {{.Values.livenessProbe.failureThreshold}}
           readinessProbe:
             exec:
@@ -121,7 +121,7 @@ spec:
               - getinfo
             periodSeconds: 30
             successThreshold: 1
-            timeoutSeconds: 3
+            timeoutSeconds: 30
             failureThreshold: {{.Values.livenessProbe.failureThreshold}}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
