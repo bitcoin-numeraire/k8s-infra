@@ -12,8 +12,8 @@ replicaCount: 1
 image:
   repository: bitcoin/bitcoin
   pullPolicy: IfNotPresent
-  tag: "29.2"
-  digest: "sha256:9780976f6d688a8f859a83760866606eccd69f8a283629039c078418503778bf"
+  tag: "31.0"
+  digest: "sha256:a1d05be6939b5c85132a761d2b795f5b8a2612ce53782263da4939778e461792"
 
 extraInitContainers: []
 sidecarContainers: []

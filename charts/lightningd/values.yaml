@@ -10,7 +10,7 @@ image:
   repository: elementsproject/lightningd
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v25.09.1"
+  tag: "v26.06.1"
 
 imagePullSecrets: []
 nameOverride: ""
