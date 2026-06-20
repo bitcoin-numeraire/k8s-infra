@@ -113,7 +113,7 @@ affinity: {}
 
 swissknifeConfig:
   invoice_expiry: 24h
-  ln_provider: clnrest
+  ln_provider: cln_rest
   auth_provider: oauth2
   host: https://api.numeraire.tech
   cln_rest_config:
