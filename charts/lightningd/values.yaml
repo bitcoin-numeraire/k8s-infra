@@ -36,7 +36,8 @@ ingress:
   enabled: false
 
 p2pService:
-  staticIP: ""
+  # Reserve this IP in your cloud provider to prevent it from changing
+  staticIP: "46.101.68.120"
   type: LoadBalancer
   port: 9735
   targetPort: 9735
@@ -104,6 +105,7 @@ tor:
   proxyHost: "127.0.0.1"
   proxyPort: 9150
   # Always use proxy for connections (recommended for Tor-only nodes)
+  # false = only use Tor for .onion addresses, clearnet for IPv4/IPv6
   alwaysUseProxy: false
 
 lightningdGenericConfig:
@@ -114,21 +116,27 @@ lightningdGenericConfig:
   - bitcoin-retry-timeout=3600
   - alias=NumeraireSwissKnife
   - rgb=55C692
-  - fee-base=800
-  - fee-per-satoshi=8
-  - min-capacity-sat=10000
+  - fee-base=5000
+  - fee-per-satoshi=5000
+  - min-capacity-sat=2000000
   - ignore-fee-limits=true
   - max-concurrent-htlcs=30
   - funding-confirms=3
   - dev-allowdustreserve=true
   - grpc-port=12313
-  - disable-dns
   - clnrest-port=3010
+  # Bind to all interfaces to accept incoming connections
+  # Do not announce for a private node.
+  # - bind-addr=0.0.0.0:9735
+  # Announce the LoadBalancer's external IP so peers can connect
+  # - announce-addr=46.101.68.120:9735
   - clnrest-host=0.0.0.0
-  - log-level=debug
+  - log-level=info
 
 startupProbe:
-  failureThreshold: 5
+  # Generous startup window: a CLN major upgrade can trigger a long one-time
+  # on-chain wallet rescan during which `lightning-cli getinfo` is slow.
+  failureThreshold: 120
 
 livenessProbe:
-  failureThreshold: 3
+  failureThreshold: 10
